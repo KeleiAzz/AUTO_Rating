@@ -1,5 +1,5 @@
 __author__ = 'keleigong'
-import GoogleScraper.scrape
+import GoogleScraper
 import urllib
 
 results = GoogleScraper.scrape('Best SEO tool', num_results_per_page=50, num_pages=3, offset=0)

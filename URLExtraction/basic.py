@@ -1,22 +1,30 @@
-__author__ = 'keleigong'
 # -*- coding: utf-8 -*-
+# A basic use case of GoogleScraper. It will print the urls it gets from google.
+
 
 from GoogleScraper import scrape_with_config, GoogleSearchError
 
 # See in the config.cfg file for possible values
 config = {
     'SCRAPING': {
-        'use_own_ip': 'True',
-        'keyword': 'Let\'s go bubbles!',
-        'search_engines': 'yandex, bing',
-        'num_pages_for_keyword': 1,
+        'use_own_ip': False,
+        'keyword': 'ps4 games discount',
+        'check_proxies': True,
+        # 'keyword_file': '/Users/keleigong/Dropbox/Python/AUTO_Rating/keyword_LHR.txt',
+        'search_engines': 'google',
+        'num_pages_for_keyword': 2,
         'scrape_method': 'selenium',
+        # 'output_filename': '/Users/keleigong/Dropbox/Python/AUTO_Rating/output_test.csv'
     },
     'SELENIUM': {
         'sel_browser': 'chrome',
     },
     'GLOBAL': {
-        'do_caching': 'False'
+        'do_caching': 'False',
+        'proxy_file': '/Users/keleigong/Dropbox/Python/AUTO_Rating/proxy.txt',
+    },
+    'OUTPUT': {
+        'output_filename': 'out.csv'
     }
 }
 
