@@ -7,13 +7,14 @@ from GoogleScraper import scrape_with_config, GoogleSearchError
 # See in the config.cfg file for possible values
 config = {
     'SCRAPING': {
-        'use_own_ip': False,
-        'keyword': 'ps4 games discount',
+        'use_own_ip': True,
+        # 'keyword': 'ps4 games discount',
         'check_proxies': True,
-        # 'keyword_file': '/Users/keleigong/Dropbox/Python/AUTO_Rating/keyword_LHR.txt',
+        'keyword_file': '/Users/keleigong/Dropbox/Python/AUTO_Rating/URLExtraction/final_keywords',
         'search_engines': 'google',
-        'num_pages_for_keyword': 2,
-        'scrape_method': 'selenium',
+        'num_pages_for_keyword': 1,
+        'scrape_method': 'http',
+        'num_workers': 4,
         # 'output_filename': '/Users/keleigong/Dropbox/Python/AUTO_Rating/output_test.csv'
     },
     'SELENIUM': {
@@ -24,7 +25,7 @@ config = {
         'proxy_file': '/Users/keleigong/Dropbox/Python/AUTO_Rating/proxy.txt',
     },
     'OUTPUT': {
-        'output_filename': 'out.csv'
+        'output_filename': 'ea_all_keywords.csv'
     }
 }
 
