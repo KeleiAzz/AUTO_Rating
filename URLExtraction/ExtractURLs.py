@@ -1,14 +1,14 @@
-# -*- coding: utf-8 -*-
-# A basic use case of GoogleScraper. It will print the urls it gets from google.
-
-
+__author__ = 'keleigong'
 from GoogleScraper import scrape_with_config, GoogleSearchError
-
+file = open('/Users/keleigong/Dropbox/Python/AUTO_Rating/URLExtraction/50_companies_test/companies_list', 'r')
+keywords = file.read()
+file.close()
+# keywords = keywords.split('\n')
 # See in the config.cfg file for possible values
 config = {
     'SCRAPING': {
         'use_own_ip': True,
-        # 'keyword': 'ps4 games discount',
+        'keywords': keywords,  # 'keywords': '\n'.join(keywords),
         'check_proxies': True,
         # 'keyword_file': '/Users/keleigong/Dropbox/Python/AUTO_Rating/URLExtraction/final_keywords',
         'search_engines': 'google',
@@ -25,7 +25,7 @@ config = {
         'proxy_file': '/Users/keleigong/Dropbox/Python/AUTO_Rating/proxy.txt',
     },
     'OUTPUT': {
-        # 'output_filename': 'ea_all_keywords.csv'
+        'output_filename': 'all_companies.csv'
     }
 }
 
