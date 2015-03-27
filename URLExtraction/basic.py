@@ -9,19 +9,25 @@ config = {
     'SCRAPING': {
         'use_own_ip': True,
         # 'keyword': 'ps4 games discount',
-        'check_proxies': True,
-        # 'keyword_file': '/Users/keleigong/Dropbox/Python/AUTO_Rating/URLExtraction/final_keywords',
+        'check_proxies': False,
+        'keyword_file': '/Users/keleigong/Dropbox/Python/AUTO_Rating/URLExtraction/50_companies_test/companies_list',
         'search_engines': 'google',
+        'google_sleeping_ranges': 5,
         'num_pages_for_keyword': 1,
-        'scrape_method': 'http',
-        'num_workers': 4,
+        'scrape_method': 'selenium',
+        # 'num_workers': 4,
+        'verbosity': 2
         # 'output_filename': '/Users/keleigong/Dropbox/Python/AUTO_Rating/output_test.csv'
     },
     'SELENIUM': {
-        'sel_browser': 'chrome',
+        'num_workers': 4,
+        'sel_browser': 'phantomjs',
     },
     'GLOBAL': {
-        'do_caching': 'False',
+        # 'do_caching': 'False',
+        'verbosity': 2,
+        'sleeping_ranges': '5: 5, 10',
+        'manual_captcha_solving': True,
         'proxy_file': '/Users/keleigong/Dropbox/Python/AUTO_Rating/proxy.txt',
     },
     'OUTPUT': {

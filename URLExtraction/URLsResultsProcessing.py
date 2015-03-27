@@ -24,19 +24,20 @@ def worksheet_processing(ws, ci):
                           'googleadservices', 'wiki', 'www.google.com']
     urls_with_frequencies = {}
     for row in ws.rows:
-        if any(k in row[ci['domain']].value for k in keywords_to_delete):
+
+        if row[ci['domain']].value is not None and any(k in row[ci['domain']].value for k in keywords_to_delete):
             pass
         else:
-            print(row[ci['query']].value)
-            if row[ci['query']].value.split(' ')[0] not in urls_with_frequencies.keys():
-                company = row[ci['query']].value.split(' ')[0]
-                urls_with_frequencies[row[ci['query']].value.split(' ')[0]] = {}
+            # print(row[ci['query']].value)
+            if row[ci['company']].value not in urls_with_frequencies.keys():
+                company = row[ci['company']].value
+                urls_with_frequencies[company]= {}
             else:
-                company = row[ci['query']].value.split(' ')[0]
+                company = row[ci['company']].value
 
             if row[ci['link']].value not in urls_with_frequencies[company].keys():
                 urls_with_frequencies[company][row[ci['link']].value] = [1,
-                                                                row[ci['query']].value.split(' ')[0],
+                                                                row[ci['company']].value,
                                                                 row[ci['rank']].value,
                                                                 row[ci['query']].value,
                                                                 row[ci['link_type']].value,
@@ -56,7 +57,8 @@ def worksheet_processing(ws, ci):
             else:
                 urls_with_frequencies[company][row[ci['link']].value][0] += 1
                 urls_with_frequencies[company][row[ci['link']].value][4] += ', ' + row[ci['query']].value
-    urls_with_frequencies.pop('query')
+    urls_with_frequencies.pop('company')
+    print(urls_with_frequencies.keys())
     for company in urls_with_frequencies.keys():
         urls_with_frequencies[company] = sorted(urls_with_frequencies[company].items(),
                                                 key=lambda x: x[1][0], reverse=True)
@@ -66,6 +68,7 @@ def worksheet_processing(ws, ci):
 def get_column_index(ws):
     column_name = list(map(lambda c: c.value, ws.rows[0]))
     column_index = {}
+    column_index['company'] = column_name.index('company')
     column_index['query'] = column_name.index('query')
     column_index['link_type'] = column_name.index('link_type')
     column_index['domain'] = column_name.index('domain')
