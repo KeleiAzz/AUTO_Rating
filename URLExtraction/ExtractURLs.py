@@ -35,7 +35,7 @@ def extract_urls(keywords_file, companies_list):
         },
         'GLOBAL': {
             # 'num_workers': 7,
-            'google_sleeping_ranges': '5: 5, 10',
+            # 'google_sleeping_ranges': '5: 10, 20',
             'verbosity': 2,
             'manual_captcha_solving': True,
             # 'do_caching': 'False',

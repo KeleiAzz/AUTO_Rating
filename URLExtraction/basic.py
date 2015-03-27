@@ -24,7 +24,7 @@ config = {
         'sel_browser': 'phantomjs',
     },
     'GLOBAL': {
-        # 'do_caching': 'False',
+        'do_caching': 'False',
         'verbosity': 2,
         'sleeping_ranges': '5: 5, 10',
         'manual_captcha_solving': True,

@@ -2,5 +2,7 @@
 *.xlsx
 *.csv
 *.txt
-URLExtraction/google_scraper.db
+*.db
 URLExtraction/__pycache__/
+*.gz
+/URLExtraction/.scrapecache
