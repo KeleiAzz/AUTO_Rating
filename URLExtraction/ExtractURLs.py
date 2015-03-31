@@ -5,6 +5,17 @@ import csv
 
 
 def extract_urls(keywords_file, companies_list):
+    '''Use GoogleScraper to extract URLs based on the combination of company name
+    and keywords, it will store the result in a .csv file and return the path
+    and name of the file.
+
+    Input: the path of the keywords file and company list. Should be txt file
+    or file without format.
+
+    Output: it will automatically create a csv file to store all the query result
+    and return the path of that file
+    '''
+
     file = open(keywords_file, 'r')
     keywords = file.read()
     file.close()
@@ -71,6 +82,12 @@ def extract_urls(keywords_file, companies_list):
 
 
 def convert_to_excel(csvfile, companies_list):
+    '''Convert the csv file created by extract_urls to excel file,
+    and add the company's name to each row.
+    :param path of csvfile:
+    :param path of companies_list:
+    :return: path of the excel file.
+    '''
     file = open(companies_list, 'r')
     companies_list = file.read()
     companies_list = companies_list.split('\n')

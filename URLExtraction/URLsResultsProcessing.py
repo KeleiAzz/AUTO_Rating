@@ -6,7 +6,12 @@ import operator
 
 
 def urls_processing(filename):
-
+    '''
+    Preprocessing the urls, delete unreliable urls, change the table format,
+    count the frequency, etc.
+    :param filename(path):
+    :return: create a excel file to store the result.
+    '''
     wb = load_workbook(filename=filename)
     ws = wb.get_active_sheet()  # ws is now an IterableWorksheet
 
@@ -18,6 +23,12 @@ def urls_processing(filename):
 
 
 def worksheet_processing(ws, ci):
+    '''
+
+    :param ws:
+    :param ci:
+    :return:
+    '''
     years = ['2011', '2012', '2013', '2014', '2015']
     keywords_to_delete = ['linkedin', 'linkup', 'disabledperson', 'indeed', 'simplyhired',
                           'career', 'recruit', 'glassdoor', 'jobs', 'monster.com', 'yelp', 'itunes',
