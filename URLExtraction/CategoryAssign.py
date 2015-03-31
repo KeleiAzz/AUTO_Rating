@@ -3,6 +3,7 @@ __author__ = 'keleigong'
 from openpyxl import load_workbook
 from openpyxl import Workbook
 
+
 def assign_category(url_file, category_file):
     keyword_category = get_keyword_category(category_file)
     wb = load_workbook(url_file, read_only=True)
@@ -14,13 +15,14 @@ def assign_category(url_file, category_file):
         if not isinstance(row[1].value, str) and row[1].value > 1:
             queries = row[5].value.split(', ')
             queries = [query.replace(row[2].value + ' ', "") for query in queries]
-            print(queries)
+            # print(queries)
             categories = set()
             for query in queries:
                 [categories.add(x) for x in keyword_category[query]]
             categories = '@_@'.join(list(categories))
-            url_category.append([row[2].value, categories, row[0].value])
-    out.save('for_database.xlsx')
+            url_category.append([row[2].value, categories, row[0].value, row[1].value, ] + queries)
+    out.save(url_file[:-5] + '_done.xlsx')
+    print('done')
 
 
 def get_keyword_category(category_file):
