@@ -6,3 +6,5 @@
 URLExtraction/__pycache__/
 *.gz
 /URLExtraction/.scrapecache
+/URLExtraction/ghostdriver.log
+/URLExtraction/google_scraper.db
