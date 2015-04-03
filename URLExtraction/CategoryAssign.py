@@ -53,5 +53,5 @@ def get_keyword_category(category_file):
     keyword_category.pop('Keywords')
     return keyword_category
 
-assign_category('/Users/keleigong/Dropbox/Python/AUTO_Rating/URLExtraction/50_companies_test/company_1-5.xlsx',
-                '/Users/keleigong/Dropbox/Python/AUTO_Rating/Final_keywords.xlsx')
+# assign_category('/Users/keleigong/Dropbox/Python/AUTO_Rating/URLExtraction/50_companies_test/company_27-28.xlsx',
+#                 '/Users/keleigong/Dropbox/Python/AUTO_Rating/Final_keywords.xlsx')

@@ -41,7 +41,7 @@ def extract_urls(keywords_file, companies_list):
             # 'output_filename': '/Users/keleigong/Dropbox/Python/AUTO_Rating/output_test.csv'
         },
         'SELENIUM': {
-            'num_workers': 2,
+            'num_workers': 4,
             'sel_browser': 'phantomjs',
         },
         'GLOBAL': {

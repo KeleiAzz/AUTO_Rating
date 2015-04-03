@@ -8,3 +8,4 @@ URLExtraction/__pycache__/
 /URLExtraction/.scrapecache
 /URLExtraction/ghostdriver.log
 /URLExtraction/google_scraper.db
+.dropbox

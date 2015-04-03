@@ -19,7 +19,8 @@ def urls_processing(filename):
     # print(column_index)
     urls_with_frequencies = worksheet_processing(ws, column_index)
     # print(urls_with_frequencies)
-    write_to_excel(urls_with_frequencies, filename)
+    return write_to_excel(urls_with_frequencies, filename)
+
 
 
 def worksheet_processing(ws, ci):
