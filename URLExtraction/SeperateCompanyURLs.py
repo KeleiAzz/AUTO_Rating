@@ -4,6 +4,7 @@ from openpyxl import Workbook
 
 
 def seperate_companies(filename):
+    path = '/Users/keleigong/Dropbox/Python/AUTO_Rating/URLExtraction/50_companies_test/company_urls_processed/'
     wb = load_workbook(filename)
     ws = wb.get_active_sheet()
     # company_names = list(set(map(lambda x: x.value, ws.column[0])))
@@ -13,13 +14,16 @@ def seperate_companies(filename):
     urls = {}
     for row in ws.rows:
         if row[0].value in urls.keys():
-            urls[row[0].value].append(row[2].value)
+            urls[row[0].value].append(row[1].value)
         else:
             urls[row[0].value] = []
+    urls.pop('company')
     print(urls.keys())
     for company in urls.keys():
         out = Workbook(write_only=True)
         url_sheet = out.create_sheet(0, 'links')
         for url in urls[company]:
             url_sheet.append([url])
-        out.save(company + '.xlsx')
+        out.save(path + company + '.xlsx')
+
+seperate_companies('/Users/keleigong/Dropbox/Python/AUTO_Rating/URLExtraction/50_companies_test/company_urls_processed/merged.xlsx')

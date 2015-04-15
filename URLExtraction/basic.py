@@ -21,7 +21,8 @@ config = {
     },
     'SELENIUM': {
         'num_workers': 4,
-        'sel_browser': 'phantomjs',
+        # 'sel_browser': 'phantomjs',
+        'sel_browser': 'Chrome',
     },
     'GLOBAL': {
         'do_caching': 'False',

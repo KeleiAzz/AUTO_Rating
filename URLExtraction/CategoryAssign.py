@@ -2,6 +2,8 @@ __author__ = 'keleigong'
 
 from openpyxl import load_workbook
 from openpyxl import Workbook
+from os import listdir
+from os.path import isfile, join
 
 
 def assign_category(url_file, category_file):
@@ -11,7 +13,7 @@ def assign_category(url_file, category_file):
     url_category = out.create_sheet(0, 'url_category')
     ws = wb.get_sheet_by_name('output')
 
-    url_category.append(["company", "url", "frequency", "sm", "ss", "cm", "srm", "lhr", "es",
+    url_category.append(["company", "url", "frequency", "category","sm", "ss", "cm", "srm", "lhr", "es",
                          "sm_ratio", "ss_ratio", "cm_ratio", "srm_ratio", "lhr_ratio", "es_ratio",
                          "sm_keywords", "ss_keywords", "cm_keywords",
                         "srm_keywords", "lhr_keywords", 'es_keywords'])
@@ -31,7 +33,7 @@ def assign_category(url_file, category_file):
             srm, srm_keyword = categories.count("SRM"), ",".join([query for query in queries if keyword_category[query].count("SRM") > 0])
             lhr, lhr_keyword = categories.count("LHR"), ",".join([query for query in queries if keyword_category[query].count("LHR") > 0])
             es, es_keyword = categories.count("ES"), ",".join([query for query in queries if keyword_category[query].count("ES") > 0])
-            url_category.append([row[2].value, row[0].value, row[1].value, sm, ss, cm, srm, lhr, es,
+            url_category.append([row[2].value, row[0].value, row[1].value, '@_@'.join(list(set(categories))), sm, ss, cm, srm, lhr, es,
                                  round(sm/keyword_total[0], 3),
                                  round(ss/keyword_total[1], 3),
                                  round(cm/keyword_total[2], 3),
@@ -53,5 +55,14 @@ def get_keyword_category(category_file):
     keyword_category.pop('Keywords')
     return keyword_category
 
+
+def assign_category_multiple(mypath):
+    onlyfiles = [join(mypath, f) for f in listdir(mypath) if f[-4:] == "xlsx" and isfile(join(mypath, f))]
+    for file in onlyfiles:
+        assign_category(file, '/Users/keleigong/Dropbox/Python/AUTO_Rating/Final_keywords.xlsx')
+
+
 # assign_category('/Users/keleigong/Dropbox/Python/AUTO_Rating/URLExtraction/50_companies_test/company_27-28.xlsx',
 #                 '/Users/keleigong/Dropbox/Python/AUTO_Rating/Final_keywords.xlsx')
+
+assign_category_multiple('/Users/keleigong/Dropbox/Python/AUTO_Rating/URLExtraction/50_companies_test/company_urls_origin')
