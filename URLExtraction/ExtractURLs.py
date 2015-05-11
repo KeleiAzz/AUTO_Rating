@@ -30,19 +30,21 @@ def extract_urls(keywords_file, companies_list):
             query.append(company + ' ' + word)
     config = {
         'SCRAPING': {
-            'use_own_ip': True,
+            'use_own_ip': False,
             'keywords': '\n'.join(query),  # 'keywords': '\n'.join(keywords),
             'check_proxies': False,
             # 'keyword_file': '/Users/keleigong/Dropbox/Python/AUTO_Rating/URLExtraction/final_keywords',
             'search_engines': 'google',
-            'num_pages_for_keyword': 1,
+            'num_pages_for_keyword': 2,
             'scrape_method': 'selenium',
+            # 'scrape_method': 'http',
             # 'num_workers': 7,
             # 'output_filename': '/Users/keleigong/Dropbox/Python/AUTO_Rating/output_test.csv'
         },
         'SELENIUM': {
             'num_workers': 4,
-            'sel_browser': 'phantomjs',
+            'sel_browser': 'Phantomjs',
+            # 'sel_browser': 'Chrome',
         },
         'GLOBAL': {
             # 'num_workers': 7,
