@@ -9,3 +9,4 @@ URLExtraction/__pycache__/
 /URLExtraction/ghostdriver.log
 /URLExtraction/google_scraper.db
 .dropbox
+*.docx
