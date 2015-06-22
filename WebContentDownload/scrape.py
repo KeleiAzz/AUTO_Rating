@@ -42,8 +42,8 @@ __author__ = 'Ka-Ping Yee <ping@zesty.ca>'
 __date__ = '$Date: 2010-05-26 18:39:37 $'.split()[1].replace('/', '-')
 __version__ = '$Revision: 1.49 $'
 
-from urlparse import urlsplit, urljoin
-from htmlentitydefs import name2codepoint
+from urllib.parse import urlsplit, urljoin
+from html.entities import name2codepoint
 import sys, re
 
 def regex(template, *params, **kwargs):
@@ -200,7 +200,7 @@ def fetch(url, data='', agent=None, referrer=None, charset=None, verbose=0,
     elif scheme == 'https':
         reply = curl(url, data, agent, referrer, cookieheader, verbose)
     else:
-        raise ValueError, scheme + ' not supported'
+        raise ValueError(scheme + ' not supported')
 
     # Take apart the HTTP reply.
     headers, head, content = {}, reply, ''
@@ -373,10 +373,10 @@ charrefpat = re.compile(r'&(#(\d+|x[\da-fA-F]+)|[\w.:-]+);?')
 
 def htmldecode(text):
     """Decode HTML entities in the given text."""
-    if type(text) is unicode:
-        uchr = unichr
+    if type(text) is str:
+        uchr = chr
     else:
-        uchr = lambda value: value > 127 and unichr(value) or chr(value)
+        uchr = lambda value: value > 127 and chr(value) or chr(value)
     def entitydecode(match, uchr=uchr):
         entity = match.group(1)
         if entity.startswith('#x'):
@@ -448,7 +448,7 @@ def striptags(html):
         for line in linesplitter.split(paragraph):
             line = ''.join(tagsplitter.split(line))
             line = htmldecode(line)
-            nbsp = (type(line) is unicode) and u'\xa0' or '\xa0'
+            nbsp = (type(line) is str) and u'\xa0' or '\xa0'
             line = line.replace(nbsp, ' ')
             lines.append(' '.join(line.split()))
         paragraph = '\n'.join(lines)
@@ -542,7 +542,7 @@ class Region:
         indices into the original string (not into the parent region).  The
         'starttag' and 'endtag' arguments are indices into an internal array
         of tags, intended for use by the implementation only."""
-        if isinstance(parent, basestring):
+        if isinstance(parent, str):
             self.document = parent
             self.tags = self.scantags(self.document)
         else:
@@ -610,7 +610,7 @@ class Region:
         itagname, iattrs = self.tags[i][2], self.tags[i][3]
         if itagname[:1] not in ['', '/']:
             if itagname == tagname or tagname is None:
-                if isinstance(iattrs, basestring):
+                if isinstance(iattrs, str):
                     if itagname[:1] in ['?', '!']:
                         self.tags[i][3] = iattrs = {}
                     else:
@@ -624,7 +624,7 @@ class Region:
         start tags) or tag names prefixed with '/' (for end tags).  If
         'outside' is 0, scan within the current region; if 'outside' is 1,
         scan starting from the end of the current region onwards."""
-        if isinstance(enders, basestring):
+        if isinstance(enders, str):
             enders = enders.split()
         tagname = self.tags[starttag][2]
         depth = 1
