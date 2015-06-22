@@ -10,3 +10,4 @@ URLExtraction/__pycache__/
 /URLExtraction/google_scraper.db
 .dropbox
 *.docx
+WebContentDownload/__pycache__
