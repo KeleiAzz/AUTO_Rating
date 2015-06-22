@@ -5,7 +5,7 @@ import MySQLdb
 
 def executeQuery(sql):
     # Open database connection
-    db = MySQLdb.connect("localhost", "root", "root", "ml")
+    db = MySQLdb.connect("localhost", "root", "1423", "ml")
 
     # prepare a cursor object using cursor() method
     cursor = db.cursor()
@@ -21,5 +21,3 @@ def executeQuery(sql):
         print('Error: Unable to fetch data')
     # disconnect from server
     db.close()
-
-
