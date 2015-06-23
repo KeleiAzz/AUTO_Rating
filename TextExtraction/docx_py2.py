@@ -19,17 +19,18 @@ import zipfile
 from lxml import etree
 from os.path import abspath, basename, join
 
-try:
-    from PIL import Image
-except ImportError:
-    import Image
+# try:
+#     from PIL import Image
+# except ImportError:
+#     import Image
 
 try:
     from PIL.ExifTags import TAGS
 except ImportError:
     TAGS = {}
 
-from exceptions import PendingDeprecationWarning
+# from exceptions import PendingDeprecationWarning
+# PendingDeprecationWarning = 'PendingDeprecationWarning'
 from warnings import warn
 
 import logging
@@ -344,14 +345,14 @@ def table(contents, heading=True, colw=None, cwunit='dxa', tblw=0,
     tablewidth = makeelement(
         'tblW', attributes={'w': str(tblw), 'type': str(twunit)})
     tableprops.append(tablewidth)
-    if len(borders.keys()):
+    if len(list(borders.keys())):
         tableborders = makeelement('tblBorders')
         for b in ['top', 'left', 'bottom', 'right', 'insideH', 'insideV']:
-            if b in borders.keys() or 'all' in borders.keys():
-                k = 'all' if 'all' in borders.keys() else b
+            if b in list(borders.keys()) or 'all' in list(borders.keys()):
+                k = 'all' if 'all' in list(borders.keys()) else b
                 attrs = {}
-                for a in borders[k].keys():
-                    attrs[a] = unicode(borders[k][a])
+                for a in list(borders[k].keys()):
+                    attrs[a] = str(borders[k][a])
                 borderelem = makeelement(b, attributes=attrs)
                 tableborders.append(borderelem)
         tableprops.append(tableborders)
@@ -422,7 +423,7 @@ def table(contents, heading=True, colw=None, cwunit='dxa', tblw=0,
                 if isinstance(c, etree._Element):
                     cell.append(c)
                 else:
-                    if celstyle and 'align' in celstyle[i].keys():
+                    if celstyle and 'align' in list(celstyle[i].keys()):
                         align = celstyle[i]['align']
                     else:
                         align = 'left'
@@ -494,7 +495,7 @@ def picture(
         exif = {}
 
     imageExif = {}
-    for tag, value in exif.items():
+    for tag, value in list(exif.items()):
         imageExif[TAGS.get(tag, tag)] = value
 
     imageOrientation = imageExif.get('Orientation', 1)
@@ -745,7 +746,7 @@ def AdvSearch(document, search, bs=3):
                         if found:
                             break
                         if s+l <= len(searchels):
-                            e = range(s, s+l)
+                            e = list(range(s, s+l))
                             txtsearch = ''
                             for k in e:
                                 txtsearch += searchels[k].text
@@ -833,7 +834,7 @@ def advReplace(document, search, replace, bs=3):
                         if found:
                             break
                         if s+l <= len(searchels):
-                            e = range(s, s+l)
+                            e = list(range(s, s+l))
                             #print "elems:", e
                             txtsearch = ''
                             for k in e:
@@ -853,7 +854,7 @@ def advReplace(document, search, replace, bs=3):
                                               replace)
                                     log.debug("Matched text: %s", txtsearch)
                                     log.debug("Matched text (splitted): %s",
-                                              map(lambda i: i.text, searchels))
+                                              [i.text for i in searchels])
                                     log.debug("Matched at position: %s",
                                               match.start())
                                     log.debug("matched in elements: %s", e)
@@ -922,7 +923,7 @@ def getdocumenttext(document):
     # iterate through each paragraph, appending all text (t) children to that
     # paragraphs text.
     for para in paralist:
-        paratext = u''
+        paratext = ''
         # Loop through each paragraph
         for element in para.iter():
             # Find t (text) elements
@@ -1087,7 +1088,7 @@ def savedocx(
 
     # Add & compress images, if applicable
     if imagefiledict is not None:
-        for imagepath, picrelid in imagefiledict.items():
+        for imagepath, picrelid in list(imagefiledict.items()):
             archivename = 'word/media/%s_%s' % (picrelid, basename(imagepath))
             log.info('Saving: %s', archivename)
             docxfile.write(imagepath, archivename)
