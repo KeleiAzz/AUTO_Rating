@@ -3,7 +3,8 @@
 *.csv
 *.txt
 *.db
-URLExtraction/__pycache__/
+*/__pycache__/
+
 *.gz
 /URLExtraction/.scrapecache
 /URLExtraction/ghostdriver.log
