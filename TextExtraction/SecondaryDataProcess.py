@@ -4,7 +4,7 @@ from openpyxl import Workbook
 
 from docx.text.paragraph import Paragraph
 
-doc = Document('/Users/keleigong/Dropbox/Python/AUTO_Rating/TextExtraction/(final)2014 SCRC Secondary Data without split.docx')
+doc = Document('/Users/keleigong/Dropbox/Python/AUTO_Rating/TextExtraction/2012 summer ( Secondary Data 1).docx')
 
 def is_section(paragraph):
     if any(run.underline for run in paragraph.runs):
@@ -13,7 +13,8 @@ def is_section(paragraph):
         return False
 
 def is_category(paragraph):
-    if len(paragraph.text) > 2 and paragraph.text.strip()[-1] == ':':
+    # print(p.text)
+    if len(paragraph.text.strip()) > 2 and paragraph.text.strip()[-1] == ':':
         return True
     elif any(run.bold for run in paragraph.runs) and all(not run.underline for run in paragraph.runs):
         return True
@@ -58,14 +59,14 @@ current_brief = ''
 # f = open('processed.txt', 'w')
 
 for idx, p in enumerate(doc.paragraphs):
-    if len(p.text) > 2:
+    if len(p.text.strip()) > 2:
         if 'Heading' in p.style.name:
             # print(p.text)
-            company_name.append(p.text)
+            # company_name.append(p.text)
             previous_p = p
-            current_company = p.text
+            current_company = p.text.replace('\n', '').strip()
             # print('=========================',file=f)
-            print(p.text)
+            print(current_company)
         else:
             if is_section(p):
                 current_section = p.text
@@ -76,7 +77,7 @@ for idx, p in enumerate(doc.paragraphs):
                 if not is_section(previous_p):
                     rows.append(row(current_company, current_section, current_category, current_link, current_brief))
                     current_link, current_brief = '', ''
-                current_category = p.text
+                current_category = p.text.replace(':', '').replace('N/A', '').replace('NA', '').strip()
                 previous_p = p
                 # print('\t\t>>' + str(p.text.encode('utf8')), file=f)
             elif p.text[0:4] == 'http':
@@ -107,14 +108,14 @@ sheet = wb.create_sheet(0, 'output')
 #                   'link_type', 'title', 'domain', 'snippet', 'year'])
 for row in rows:
     sheet.append(row.to_list())
-wb.save('output.xlsx')
+wb.save('2012_secondary_data.xlsx')
 print('done')
 
 
 # Using the old version docx module"
-import TextExtraction.docx_py2 as dx
+# import TextExtraction.docx_py2 as dx
 
-document = dx.opendocx('/Users/keleigong/Dropbox/Python/AUTO_Rating/TextExtraction/(final)2014 SCRC Secondary Data without split.docx')
+# document = dx.opendocx('/Users/keleigong/Dropbox/Python/AUTO_Rating/TextExtraction/(final)2014 SCRC Secondary Data without split.docx')
 
 # print(dx.getdocumenttext(document))
 
