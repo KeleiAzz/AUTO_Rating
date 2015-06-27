@@ -4,7 +4,7 @@ from openpyxl import Workbook
 
 from docx.text.paragraph import Paragraph
 
-doc = Document('/Users/keleigong/Dropbox/Python/AUTO_Rating/TextExtraction/2012 summer ( Secondary Data 1).docx')
+doc = Document('/Users/keleigong/Dropbox/Python/AUTO_Rating/TextExtraction/2011 Secondary (Part I).docx')
 
 def is_section(paragraph):
     if any(run.underline for run in paragraph.runs):
@@ -59,8 +59,8 @@ current_brief = ''
 # f = open('processed.txt', 'w')
 
 for idx, p in enumerate(doc.paragraphs):
-    if len(p.text.strip()) > 2:
-        if 'Heading' in p.style.name:
+    if len(p.text.strip()) > 1:
+        if 'Heading 1' in p.style.name:
             # print(p.text)
             # company_name.append(p.text)
             previous_p = p
@@ -108,7 +108,7 @@ sheet = wb.create_sheet(0, 'output')
 #                   'link_type', 'title', 'domain', 'snippet', 'year'])
 for row in rows:
     sheet.append(row.to_list())
-wb.save('2012_secondary_data.xlsx')
+wb.save('2011_secondary_data_I.xlsx')
 print('done')
 
 
