@@ -4,11 +4,12 @@
 *.txt
 *.db
 */__pycache__/
-
+*.key
 *.gz
 /URLExtraction/.scrapecache
 /URLExtraction/ghostdriver.log
-/URLExtraction/google_scraper.db
+/URLExtraction/google_scraper.db.bak
 .dropbox
 *.docx
 WebContentDownload/__pycache__
+*.pyc
