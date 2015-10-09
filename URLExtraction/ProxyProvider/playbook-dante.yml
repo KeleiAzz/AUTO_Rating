@@ -1,0 +1,23 @@
+---
+- hosts: all 
+  tasks:
+    - name: Installs dante-server web server
+      apt: pkg=dante-server state=installed update_cache=true
+      notify:
+        - start danted
+      sudo: yes
+      sudo_user: root
+
+    - name: Upload config file
+      copy: src=danted.conf dest=/etc/ mode=0644
+      register: conf
+      sudo: yes
+
+    - name: start danted
+      command: /etc/init.d/danted start
+      sudo: yes
+      when: conf|success
+  handlers:
+    - name: start danted
+      command: /etc/init.d/danted start
+      sudo: yes

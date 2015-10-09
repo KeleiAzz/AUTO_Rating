@@ -1,0 +1,3 @@
+i-dc825d7e ansible_ssh_host=54.172.197.109 ansible_ssh_user=ubuntu ansible_ssh_private_key_file=/Users/keleigong/Dropbox/CS/CSC591-DevOps/workshop3/HW1/private.key
+i-652cf3c7 ansible_ssh_host=52.91.199.218 ansible_ssh_user=ubuntu ansible_ssh_private_key_file=/Users/keleigong/Dropbox/CS/CSC591-DevOps/workshop3/HW1/private.key
+i-08508faa ansible_ssh_host=52.91.231.148 ansible_ssh_user=ubuntu ansible_ssh_private_key_file=/Users/keleigong/Dropbox/Python/AUTO_Rating/URLExtraction/ProxyProvider/private.key
