@@ -9,8 +9,9 @@ def main():
     provider = 'aws'
     num = 1
     key = "private.key"
+    action = 'none'
     try:
-        options, remainder = getopt.getopt(sys.argv[1:], 'hn:p:k:', ['num=', 'provider=', 'key='])
+        options, remainder = getopt.getopt(sys.argv[1:], 'hn:p:k:a:', ['num=', 'provider=', 'key=', 'action='])
         # print options, remainder
         for opt, arg in options:
             if opt == '-h':
@@ -21,25 +22,33 @@ def main():
                 provider = arg
             elif opt in ('-k,', '--key'):
                 key = arg
+            elif opt in ('-a', '--action'):
+                action = arg
+        if action.lower() == 'start':
+            aws.startAllInstances(key)
+            print('All instances started, inventory file updated')
+        elif action.lower() == 'stop':
+            aws.stopAllInstances()
+            print("All instances stopped")
+        else:
+            if provider.lower() == "aws":
+                instances = aws.createInstances(num, security_group='proxy')
+                while not aws.checkIfAllActive(instances):
+                    print("Wait for servers initialization")
+                    time.sleep(5)
+                print("All servers ready")
+                aws.createInventory(instances, 'private.key')
+            if provider.lower() in ('do', 'digitalocean'):
+                token = os.environ["DO_TOKEN"]
+                conn = DO.Digitalocean(token)
+                for i in range(num):
+                    conn.createDroplet('devops%d' % i, 'nyc3', 'ubuntu-14-04-x32')
 
-        if provider.lower() == "aws":
-            instances = aws.createInstances(num, security_group='proxy')
-            while not aws.checkIfAllActive(instances):
-                print("Wait for servers initialization")
-                time.sleep(5)
-            print("All servers ready")
-            aws.createInventory(instances, 'private.key')
-        if provider.lower() in ('do', 'digitalocean'):
-            token = os.environ["DO_TOKEN"]
-            conn = DO.Digitalocean(token)
-            for i in range(num):
-                conn.createDroplet('devops%d' % i, 'nyc3', 'ubuntu-14-04-x32')
-
-            while not conn.checkIfAllActive():
-                print("Wait for servers initialization")
-                time.sleep(5)
-            print("All servers ready")
-            conn.createInventory(key)
+                while not conn.checkIfAllActive():
+                    print("Wait for servers initialization")
+                    time.sleep(5)
+                print("All servers ready")
+                conn.createInventory(key)
 
     except getopt.GetoptError:
         print('Provisioning.py -n <number of instances/droplets> -p <provider:aws or DO>')
