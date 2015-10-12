@@ -63,7 +63,7 @@ def createInventory(instances, key_file):
     f = open('inventory', 'ab')
     print("Writing to inventory")
     for i in range(len(ips)):
-        s = '%s ansible_ssh_host=%s ansible_ssh_user=%s ansible_ssh_private_key_file=%s' % (ids[i], ips[i], user, key_file_path,)
+        s = '%s ansible_ssh_host=%s ansible_ssh_user=%s ansible_ssh_private_key_file=%s' % (ids[i], ips[i], 'ubuntu', key_file_path,)
         print(s)
         # print(s, file=f)
         f.write(s + '\n')
@@ -77,3 +77,58 @@ def checkIfAllActive(instances):
         return True
     else:
         return False
+
+def startAllInstances(key_file):
+    key_file_path = os.path.abspath(key_file)
+    instances = ec2.instances.filter(
+        Filters=[{'Name': 'instance-state-name', 'Values': ['stopped']}]
+    )
+    instances.start()
+    print("Wait for instances to start")
+    time.sleep(5)
+    instances = ec2.instances.filter(
+        Filters=[{'Name': 'instance-state-name', 'Values': ['running', 'pending']}]
+    )
+    ids = [ins.id for ins in instances]
+    print("Instances started, IDs: ", ids)
+    ips = []
+    for id in ids:
+        ips.append(ec2.Instance(id).public_ip_address)
+    local_IP = getLocalIP()
+
+    while(True):
+        if all(ips):
+            print("Get IPs: ", ips)
+            break
+        else:
+            print("Waiting for IP address")
+            time.sleep(5)
+            ips = []
+            for id in ids:
+                ips.append(ec2.Instance(id).public_ip_address)
+    f = open('inventory', 'w')
+    for i in range(len(ids)):
+        s = '%s ansible_ssh_host=%s ansible_ssh_user=%s ansible_ssh_private_key_file=%s' % (ids[i], ips[i], 'ubuntu', key_file_path,)
+        f.write(s + '\n')
+    f.close()
+    sg = ec2.SecurityGroup('sg-e888718e')
+    try:
+        sg.authorize_ingress(
+            IpProtocol='-1',
+            CidrIp=local_IP + '/32'
+        )
+        print('Authorize inbound IP success')
+    except:
+        print('Already exists')
+
+def stopAllInstances():
+    ec2.instances.filter(
+        Filters=[{'Name': 'instance-state-name', 'Values': ['running']}]
+    ).stop()
+
+def getLocalIP():
+    import urllib2
+    import json
+    response = urllib2.urlopen('http://ipinfo.io/json')
+    data = json.load(response)
+    return str(data['ip'])
