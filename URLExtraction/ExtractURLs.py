@@ -1,8 +1,27 @@
+# -*- coding: utf-8 -*-
 __author__ = 'keleigong'
 from GoogleScraper import scrape_with_config, GoogleSearchError
 from openpyxl import Workbook
 import csv
 
+
+def create_query(keywords_file, companies_list):
+    file = open(keywords_file, 'r')
+    keywords = file.read()
+    file.close()
+    file = open(companies_list, 'r')
+    companies_names = file.read()
+    file.close()
+    keywords = keywords.split('\n')
+    companies_names = companies_names.split('\n')
+    query = []
+    for company in companies_names:
+        company_splited = company.split(' ')
+        if company_splited[-1] in ["INC", "COPR"]:
+            company = ' '.join(company_splited[0:-1])
+        for word in keywords:
+            query.append(company + ' ' + word)
+    return query
 
 def extract_urls(keywords_file, companies_list):
     '''Use GoogleScraper to extract URLs based on the combination of company name
@@ -16,18 +35,7 @@ def extract_urls(keywords_file, companies_list):
     and return the path of that file
     '''
 
-    file = open(keywords_file, 'r')
-    keywords = file.read()
-    file.close()
-    file = open(companies_list, 'r')
-    companies_names = file.read()
-    file.close()
-    keywords = keywords.split('\n')
-    companies_names = companies_names.split('\n')
-    query = []
-    for company in companies_names:
-        for word in keywords:
-            query.append(company + ' ' + word)
+    query = create_query(keywords_file, companies_list)
     config = {
         'SCRAPING': {
             'use_own_ip': False,
@@ -35,27 +43,27 @@ def extract_urls(keywords_file, companies_list):
             'check_proxies': False,
             # 'keyword_file': '/Users/keleigong/Dropbox/Python/AUTO_Rating/URLExtraction/final_keywords',
             'search_engines': 'google',
-            'num_pages_for_keyword': 2,
+            'num_pages_for_keyword': 1,
             'scrape_method': 'selenium',
-            # 'scrape_method': 'http',
-            # 'num_workers': 7,
+            'num_workers': 5,
             # 'output_filename': '/Users/keleigong/Dropbox/Python/AUTO_Rating/output_test.csv'
         },
         'SELENIUM': {
-            'num_workers': 4,
+            # 'num_workers': 10,
             'sel_browser': 'Phantomjs',
             # 'sel_browser': 'Chrome',
         },
         'GLOBAL': {
-            # 'num_workers': 7,
+            # 'num_workers': 10,
             # 'google_sleeping_ranges': '5: 10, 20',
             'verbosity': 2,
             'manual_captcha_solving': True,
-            # 'do_caching': 'False',
-            'proxy_file': '/Users/keleigong/Dropbox/Python/AUTO_Rating/proxy.txt',
+            'do_caching': 'True',
+            'proxy_file': '/Users/keleigong/Dropbox/Python/AUTO_Rating/URLExtraction/ProxyProvider/proxy.txt',
         },
         'OUTPUT': {
-            'output_filename': companies_list + '.csv'
+            'database_name': companies_list,
+            'output_filename': companies_list + '.json'
         },
     }
 
