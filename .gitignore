@@ -13,3 +13,6 @@
 *.docx
 WebContentDownload/__pycache__
 *.pyc
+*.log
+URLExtraction/countrykeywords
+URLExtraction/concinnity_600
