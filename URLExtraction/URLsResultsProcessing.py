@@ -181,15 +181,23 @@ def query_processing(company_json):
     return company_querys
 
 def remove_irrelevant_urls(company_querys):
+    keywords_to_delete = ['linkedin', 'linkup', 'disabledperson', 'indeed', 'simplyhired',
+                          'career', 'recruit', 'glassdoor', 'jobs', 'monster.com', 'yelp', 'itunes',
+                          'googleadservices', 'wiki', 'www.google.com']
     company_all_urls = {}
     for company, querys in company_querys.items():
         company_all_urls[company] = []
         for query in querys:
             for result in query.results:
+                if any(k in result.domain for k in keywords_to_delete):
+                    continue
                 if result in company_all_urls[company]:
                     pass
                 else:
                     company_all_urls[company].append(result)
+    for company, urls in company_all_urls.items():
+        urls.sort(key=lambda x: x.count,reverse=True)
+        company_all_urls[company] = list(filter(lambda x: x.count>2, urls))
     return company_all_urls
 
 
