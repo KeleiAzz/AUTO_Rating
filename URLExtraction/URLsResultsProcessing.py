@@ -13,10 +13,10 @@ class SearchQuery(object):
         self.results = []
         for result in query['results']:
             if result['link_type'] == 'results' and result['link'][0:4] == 'http':
-                self.results.append(SearchResult(company, result))
+                self.results.append(SearchResult(company, result, self.keyword))
 
 class SearchResult(object):
-    def __init__(self, company, result):
+    def __init__(self, company, result, keyword):
         self.company = company
         self.domain = result['domain']
         self.id = result['id']
@@ -28,6 +28,7 @@ class SearchResult(object):
         self.title = result['title']
         self.visible_link = result['visible_link']
         self.count = 1
+        self.keywords = [keyword]
 
     def set_link(self, link):
         self.link = link
@@ -36,6 +37,8 @@ class SearchResult(object):
         # print(self.link, other.link)
         if (isinstance(other, self.__class__)) and self.link == other.link:
             other.count += 1
+            other.rank = min(self.rank, other.rank)
+            other.keywords.append(self.keywords[0])
             return True
         return False
 
@@ -183,7 +186,7 @@ def query_processing(company_json):
 def remove_irrelevant_urls(company_querys):
     keywords_to_delete = ['linkedin', 'linkup', 'disabledperson', 'indeed', 'simplyhired',
                           'career', 'recruit', 'glassdoor', 'jobs', 'monster.com', 'yelp', 'itunes',
-                          'googleadservices', 'wiki', 'www.google.com']
+                          'googleadservices', 'wiki', 'www.google.com', 'amazon.com']
     company_all_urls = {}
     for company, querys in company_querys.items():
         company_all_urls[company] = []
@@ -200,12 +203,29 @@ def remove_irrelevant_urls(company_querys):
         company_all_urls[company] = list(filter(lambda x: x.count>2, urls))
     return company_all_urls
 
+def write_to_xlsx(company_all_urls, filename):
+    wb2 = Workbook(filename)
+    sheet = wb2.create_sheet(0, 'output')
+    # sheet.append(['link', 'frequency', 'company', 'rank', 'year', 'query',
+    #               'link_type', 'title', 'domain', 'snippet', 'year'])
+    # sheet.append(company_all_urls)
+    for company, urls in company_all_urls.items():
+        sheet.append(list(urls[0].__dict__.keys()))
+        for url in urls:
+            url.keywords = ', '.join(url.keywords)
+            row = [value for key, value in url.__dict__.items()]
+            sheet.append(row)
 
-company_json = json_processing('/Users/keleigong/Dropbox/Python/AUTO_Rating/URLExtraction/concinnity_600/1-50.json',
-                               '/Users/keleigong/Dropbox/Python/AUTO_Rating/URLExtraction/concinnity_600/1-50')
-company_querys = query_processing(company_json)
+    wb2.save(filename)
+    return filename
 
-company_all_urls = remove_irrelevant_urls(company_querys)
+# company_json = json_processing('/Users/keleigong/Dropbox/Python/AUTO_Rating/URLExtraction/concinnity_600/1-50.json',
+#                                '/Users/keleigong/Dropbox/Python/AUTO_Rating/URLExtraction/concinnity_600/1-50')
+# company_querys = query_processing(company_json)
+#
+# company_all_urls = remove_irrelevant_urls(company_querys)
+#
+# write_to_xlsx(company_all_urls, "1-50.xlsx")
 # print(get_company_names('/Users/keleigong/Dropbox/Python/AUTO_Rating/URLExtraction/concinnity_600/1-50'))
 # company = {}
 # count = {}
