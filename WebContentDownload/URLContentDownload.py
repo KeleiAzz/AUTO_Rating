@@ -97,12 +97,31 @@ class Fetcher:
                     file.write(ans.read())
                     file.close()
                     print('PDF downloaded')
+                    ans = 'PDF content'
+                else:
+                    ans = ans.read()
                 # print(ans.getheader('Content-Type'))  # application/pdf
                 # ans = ans.read()
             except Exception as what:
                 ans = ''
                 print(what)
-            self.q_ans.put((req,ans))
+            # if ans == '':
+            #     self.q_ans.put((req,'no content fetched'))
+            #     with self.lock:
+            #         self.running -= 1
+            # elif ans.getheader('Content-Type') == 'application/pdf':
+            #     self.q_ans.put((req,'pdf content'))
+            #     self.pdfcounter += 1
+            #     # tmp = ans.read()
+            #     file = open(str(self.pdfcounter) + '.pdf', 'wb')
+            #     file.write(ans.read())
+            #     file.close()
+            #     print("PDF downloaded")
+            #     with self.lock:
+            #         self.running -= 1
+            # else:
+            #     ans = ans.read()
+            self.q_ans.put((req, ans))
             with self.lock:
                 self.running -= 1
             self.q_req.task_done()
@@ -115,6 +134,6 @@ for url in urls:
     f.push(url)
 while f.taskleft():
     url, content = f.pop()
-    print(url.get_full_url(), (content))
+    print(url.get_full_url(), len(content))
 
 # a = urllib2
