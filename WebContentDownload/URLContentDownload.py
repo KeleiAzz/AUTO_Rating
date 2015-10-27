@@ -22,6 +22,7 @@ company_all_urls = URL.remove_irrelevant_urls(company_querys)
 import urllib.request as urllib2
 from threading import Thread,Lock
 from queue import Queue
+import wget
 import time
 # from pattern.web import URL
 class Fetcher:
@@ -68,13 +69,17 @@ class Fetcher:
                 self.running += 1
             try:
                 ans = self.opener.open(req[1], timeout=5)
-                if ans.getheader('Content-Type') == 'application/pdf':
+                if 'application/pdf' in ans.getheader('Content-Type'):
                     # file = open( req[0] + str(self.pdfcounter) + '.pdf', 'wb')
                     with self.lock:
                         self.pdfcounter += 1
                     # file.write(ans.read())
                     # file.close()
                     print('PDF downloaded')
+                    ans = 'PDF content'
+                elif 'application/download' in ans.getheader('Content-Type'):
+                    wget.download(req[1].get_full_url())
+                    print('file downloaded')
                     ans = 'PDF content'
                 else:
                     h = html2text.HTML2Text()
