@@ -3,22 +3,8 @@ __author__ = 'keleigong'
 import html2text
 import urllib.request
 import URLExtraction.URLsResultsProcessing as URL
+import TextExtraction.SecondaryDataProcess as secondary
 
-company_json = URL.json_processing('/Users/keleigong/Dropbox/Python/AUTO_Rating/URLExtraction/concinnity_600/1-50.json',
-                                   '/Users/keleigong/Dropbox/Python/AUTO_Rating/URLExtraction/concinnity_600/1-50')
-company_querys = URL.query_processing(company_json)
-
-company_all_urls = URL.remove_irrelevant_urls(company_querys)
-
-
-# with urllib.request.urlopen(url) as response:
-#     html = response.read()
-
-# response = map(urllib.request.urlopen, urls)
-
-# h = html2text.HTML2Text()
-# result = h.handle(html.decode('utf8'))
-# print(result)
 import urllib.request as urllib2
 from threading import Thread,Lock
 from queue import Queue
@@ -78,7 +64,7 @@ class Fetcher:
                     print('PDF downloaded')
                     ans = 'PDF content'
                 elif 'application/download' in ans.getheader('Content-Type'):
-                    wget.download(req[1].get_full_url())
+                    # wget.download(req[1].get_full_url())
                     print('file downloaded')
                     ans = 'PDF content'
                 else:
@@ -97,18 +83,35 @@ class Fetcher:
 
 # if __name__ == "__main__":
 #     links = [ 'http://www.verycd.com/topics/%d/'%i for i in range(5420,5430) ]
-urls = []
-for company, results in company_all_urls.items():
-    for result in results:
-        urls.append((company, result.link))
+
+def generate_urls_from_json(json_file, company_name_file):
+    company_json = URL.json_processing(json_file, company_name_file)
+    company_querys = URL.query_processing(company_json)
+
+    company_all_urls = URL.remove_irrelevant_urls(company_querys)
+    return company_all_urls
+
+def generate_urls_from_secondary(doc_file):
+    rows = secondary.generate_rows(doc_file)
+    company_all_urls = secondary.get_urls(rows)
+    return company_all_urls
+
+
+if __name__ == "__main__":
+    company_all_urls = generate_urls_from_json('../URLExtraction/concinnity_600/1-50.json',
+                                                '../URLExtraction/concinnity_600/1-50')
+    urls = []
+    for company, results in company_all_urls.items():
+        for result in results:
+            urls.append((company, result.link))
 # urls = [result.link for result in company_all_urls['BIOGEN']]
-f = Fetcher(threads=10)
-h = html2text.HTML2Text()
-for url in urls:
-    f.push(url)
-while f.taskleft():
-    url, content = f.pop()
-    print(url[0], url[1].get_full_url(), len(content))
+    f = Fetcher(threads=10)
+    h = html2text.HTML2Text()
+    for url in urls:
+        f.push(url)
+    while f.taskleft():
+        url, content = f.pop()
+        print(url[0], url[1].get_full_url(), len(content))
     # print(len(h.handle(content.decode('ISO-8859-1'))))
 
 # a = urllib2
