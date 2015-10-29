@@ -12,7 +12,7 @@ import wget
 import os
 import time
 # from pattern.web import URL
-base_dir = '1st/'
+base_dir = '/Users/keleigong/Google Driver/SCRC 2015 work/auto-rating/1st/'
 
 
 class Fetcher:
@@ -72,7 +72,6 @@ class Fetcher:
                     #     self.pdfcounter += 1
                     # file.write(ans.read())
                     # file.close()
-
                     downloaded_file = wget.download(req[1].get_full_url(), out=pdf_dir)
                     print('%s downloaded' % downloaded_file)
                     ans = downloaded_file
@@ -94,7 +93,7 @@ class Fetcher:
                     # ans = (req[0], ans)
                     # ans = ans.read()
             except Exception as what:
-                ans = '\n'
+                ans = 'deadlink'
                 print(what)
             self.q_ans.put((req, ans))
             with self.lock:
@@ -118,8 +117,8 @@ def generate_urls_from_secondary(doc_file):
 
 
 if __name__ == "__main__":
-    company_all_urls = generate_urls_from_json('../URLExtraction/concinnity_600/1-50.json',
-                                                '../URLExtraction/concinnity_600/1-50')
+    company_all_urls = generate_urls_from_json('../URLExtraction/concinnity_600/1-53.json',
+                                                '../URLExtraction/concinnity_600/1-53')
     urls = []
     company_files = {}
     # base_dir = '1st/'
@@ -132,7 +131,7 @@ if __name__ == "__main__":
     text_dir = base_dir + 'company_profiles/'
     if not os.path.exists(text_dir):
         os.mkdir(text_dir)
-
+    deadlink = codecs.open('deadlink.txt', "w", encoding="utf-8")
 
     for company, results in company_all_urls.items():
         company_files[company] = codecs.open(text_dir + company.replace('/', ' ')+'.txt', "w", encoding="utf-8")
@@ -147,9 +146,12 @@ if __name__ == "__main__":
     while f.taskleft():
         url, content = f.pop()
         print(url[0], url[1].get_full_url(), len(content))
-        company_files[url[0]].write('\n\n======================================================\n')
-        company_files[url[0]].write(url[1].get_full_url()+'\n')
-        company_files[url[0]].write(content)
+        if content != 'deadlink':
+            company_files[url[0]].write('\n\n======================================================\n')
+            company_files[url[0]].write(url[1].get_full_url()+'\n')
+            company_files[url[0]].write(content)
+        else:
+            deadlink.write(url[0] + ', ' + url[1].get_full_url() +',\n')
     for company, file in company_files.items():
         file.close()
     # print(len(h.handle(content.decode('ISO-8859-1'))))
