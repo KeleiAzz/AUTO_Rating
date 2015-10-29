@@ -1,7 +1,7 @@
 __author__ = 'keleigong'
 
 import html2text
-import urllib.request
+# import urllib.request
 import URLExtraction.URLsResultsProcessing as URL
 import TextExtraction.SecondaryDataProcess as secondary
 import codecs
@@ -11,8 +11,10 @@ from queue import Queue
 import wget
 import os
 import time
+# from .pdf2text import to_txt
+from WebContentDownload.pdf2text import to_txt
 # from pattern.web import URL
-base_dir = '/Users/keleigong/Google Driver/SCRC 2015 work/auto-rating/1st/'
+base_dir = '/Users/keleigong/Google Drive/SCRC 2015 work/auto-rating/'
 
 
 class Fetcher:
@@ -63,7 +65,7 @@ class Fetcher:
                 self.running += 1
             pdf_dir = base_dir + 'company_pdf/' + req[0].replace('/', ' ') + '/'
             if not os.path.exists(pdf_dir):
-                os.mkdir(pdf_dir)
+                os.makedirs(pdf_dir)
             try:
                 ans = self.opener.open(req[1], timeout=5)
                 if 'application' in ans.getheader('Content-Type') or '.pdf' in req[0]:
@@ -74,7 +76,9 @@ class Fetcher:
                     # file.close()
                     downloaded_file = wget.download(req[1].get_full_url(), out=pdf_dir)
                     print('%s downloaded' % downloaded_file)
-                    ans = downloaded_file
+                    if '.pdf' in downloaded_file[-10:]:
+                        text = to_txt(downloaded_file)
+                    ans = text
                     # ans = ans.getheader('Content-Type')
                 # elif 'download' in ans.getheader('Content-Type'):
                 #     # wget.download(req[1].get_full_url())
@@ -123,14 +127,15 @@ if __name__ == "__main__":
     company_files = {}
     # base_dir = '1st/'
     if not os.path.exists(base_dir):
-        os.mkdir(base_dir)
-    pdf_dir = base_dir + 'company_pdf/'
+        os.makedirs(base_dir)
 
+    pdf_dir = base_dir + 'company_pdf/'
     if not os.path.exists(pdf_dir):
-        os.mkdir(base_dir + 'company_pdf/')
+        os.makedirs(base_dir + 'company_pdf/')
     text_dir = base_dir + 'company_profiles/'
     if not os.path.exists(text_dir):
-        os.mkdir(text_dir)
+        os.makedirs(text_dir)
+
     deadlink = codecs.open('deadlink.txt', "w", encoding="utf-8")
 
     for company, results in company_all_urls.items():
