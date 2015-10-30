@@ -30,6 +30,9 @@ def main():
         elif action.lower() == 'stop':
             aws.stopAllInstances()
             print("All instances stopped")
+        elif action.lower() == 'terminate':
+            aws.terminateAllInstances()
+            print("All instances terminated")
         else:
             if provider.lower() == "aws":
                 instances = aws.createInstances(num, security_group='proxy')
@@ -43,7 +46,6 @@ def main():
                 conn = DO.Digitalocean(token)
                 for i in range(num):
                     conn.createDroplet('devops%d' % i, 'nyc3', 'ubuntu-14-04-x32')
-
                 while not conn.checkIfAllActive():
                     print("Wait for servers initialization")
                     time.sleep(5)
@@ -53,9 +55,6 @@ def main():
     except getopt.GetoptError:
         print('Provisioning.py -n <number of instances/droplets> -p <provider:aws or DO>')
         sys.exit(1)
-
-
-
 
 if __name__ == "__main__":
     main()

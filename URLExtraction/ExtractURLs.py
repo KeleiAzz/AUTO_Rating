@@ -17,7 +17,7 @@ def create_query(keywords_file, companies_list):
     query = []
     for company in companies_names:
         company_splited = company.split(' ')
-        if company_splited[-1] in ["INC", "COPR"]:
+        if company_splited[-1] in ["INC", "CORP"]:
             company = ' '.join(company_splited[0:-1])
         for word in keywords:
             query.append(company + ' ' + word)

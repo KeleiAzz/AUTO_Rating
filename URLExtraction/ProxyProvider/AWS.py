@@ -126,6 +126,11 @@ def stopAllInstances():
         Filters=[{'Name': 'instance-state-name', 'Values': ['running']}]
     ).stop()
 
+def terminateAllInstances():
+    ec2.instances.filter(
+        Filters=[{'Name': 'instance-state-name', 'Values': ['running', 'stopped', 'stopping']}]
+    ).terminate()
+
 def getLocalIP():
     import urllib2
     import json
