@@ -16,3 +16,4 @@ WebContentDownload/__pycache__
 *.log
 URLExtraction/countrykeywords
 URLExtraction/concinnity_600
+*.pdf
