@@ -14,7 +14,7 @@ import time
 # from .pdf2text import to_txt
 from WebContentDownload.pdf2text import to_txt, to_text2
 # from pattern.web import URL
-base_dir = '/Users/keleigong/Google Drive/SCRC 2015 work/auto-rating/1st/'
+base_dir = '/Users/keleigong/Google Drive/SCRC 2015 work/auto-rating/3rd/'
 
 
 class Fetcher:
@@ -66,20 +66,28 @@ class Fetcher:
                 self.running += 1
             pdf_dir = base_dir + 'company_pdf/' + req[0].replace('/', ' ') + '/'
             if not os.path.exists(pdf_dir):
-                os.makedirs(pdf_dir)
+                try:
+                    os.makedirs(pdf_dir)
+                except:
+                    print("dir already there")
             try:
                 ans = self.opener.open(req[1], timeout=5)
-                if 'application' in ans.getheader('Content-Type') or '.pdf' in req[0]:
-                    # file = open( req[0] + str(self.pdfcounter) + '.pdf', 'wb')
-                    # with self.lock:
-                    #     self.pdfcounter += 1
-                    # file.write(ans.read())
-                    # file.close()
-                    downloaded_file = wget.download(req[1].get_full_url(), out=pdf_dir)
-                    print('%s downloaded' % downloaded_file)
-                    if '.pdf' in downloaded_file[-10:]:
-                        text = to_txt(downloaded_file)
+                if 'pdf' in ans.getheader('Content-Type') or '.pdf' in req[0]:
+                    filename = req[0].replace('/', ' ') + str(self.pdfcounter) + '.pdf'
+                    file = open(pdf_dir + filename, 'wb')
+                    with self.lock:
+                        self.pdfcounter += 1
+                    file.write(ans.read())
+                    file.close()
+                    print('pdf file %s downloaded' % filename)
+                    text = to_text2( pdf_dir + filename)
                     ans = text
+                elif 'application' in ans.getheader('Content-Type'):
+                    # downloaded_file = wget.download(req[1].get_full_url(), out=pdf_dir)
+                    # print('%s downloaded' % downloaded_file)
+                    # if '.pdf' in downloaded_file[-10:]:
+                    #     text = to_text2(downloaded_file)
+                    ans = 'other file'
                     # ans = ans.getheader('Content-Type')
                 # elif 'download' in ans.getheader('Content-Type'):
                 #     # wget.download(req[1].get_full_url())
@@ -138,17 +146,24 @@ if __name__ == "__main__":
         os.makedirs(text_dir)
 
     deadlink = codecs.open('deadlink.txt', "a", encoding="utf-8")
+
+    with open('processed.txt', 'r') as fp:
+        processed_urls = fp.read()
+        if '\n' in processed_urls:
+            processed_urls = processed_urls.split('\n')
+
     processed = codecs.open('processed.txt', "a", encoding="utf-8")
-    processed_urls = processed.read().split('\n')
 
     for company, results in company_all_urls.items():
         company_files[company] = codecs.open(text_dir + company.replace('/', ' ')+'.txt', "a", encoding="utf-8")
         for result in results:
             if result.link not in processed_urls:
                 urls.append((company, result.link))
+            else:
+                print("This link has been processed " + result.link)
 # urls = [result.link for result in company_all_urls['BIOGEN']]
 
-    f = Fetcher(threads=10)
+    f = Fetcher(threads=15)
     h = html2text.HTML2Text()
     for url in urls:
         f.push(url)
@@ -159,9 +174,13 @@ if __name__ == "__main__":
             company_files[url[0]].write('\n\n======================================================\n')
             company_files[url[0]].write(url[1].get_full_url()+'\n')
             company_files[url[0]].write(content)
-            processed.write(url[0] + '\n')
+            processed.write(url[1].get_full_url() + '\n')
         else:
-            deadlink.write(url[0] + ', ' + url[1].get_full_url() +',\n')
+            print('Deadlink detected: ' + url[1].get_full_url())
+            deadlink.write(url[0] + ', ' + url[1].get_full_url() + ',\n')
     for company, file in company_files.items():
         file.close()
+
+    deadlink.close()
+    processed.close()
     # print(len(h.handle(content.decode('ISO-8859-1'))))
