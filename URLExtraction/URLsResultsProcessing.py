@@ -152,7 +152,7 @@ def get_company_names(file_path):
     companies_names = companies_names.split('\n')
     for i in range(len(companies_names)):
         company_splited = companies_names[i].split(' ')
-        if company_splited[-1] in ["INC"]:
+        if company_splited[-1] in ["INC", 'CORP']:
             companies_names[i] = ' '.join(company_splited[0:-1])
             # print(companies_names[i])
     return companies_names
@@ -219,13 +219,13 @@ def write_to_xlsx(company_all_urls, filename):
     wb2.save(filename)
     return filename
 
-# company_json = json_processing('/Users/keleigong/Dropbox/Python/AUTO_Rating/URLExtraction/concinnity_600/1-50.json',
-#                                '/Users/keleigong/Dropbox/Python/AUTO_Rating/URLExtraction/concinnity_600/1-50')
-# company_querys = query_processing(company_json)
-#
-# company_all_urls = remove_irrelevant_urls(company_querys)
-#
-# write_to_xlsx(company_all_urls, "1-50.xlsx")
+company_json = json_processing('/Users/keleigong/Dropbox/Python/AUTO_Rating/URLExtraction/concinnity_600/1-53.json',
+                               '/Users/keleigong/Dropbox/Python/AUTO_Rating/URLExtraction/concinnity_600/1-53')
+company_querys = query_processing(company_json)
+
+company_all_urls = remove_irrelevant_urls(company_querys)
+
+write_to_xlsx(company_all_urls, "1-53.xlsx")
 # print(get_company_names('/Users/keleigong/Dropbox/Python/AUTO_Rating/URLExtraction/concinnity_600/1-50'))
 # company = {}
 # count = {}
