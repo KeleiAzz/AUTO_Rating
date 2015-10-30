@@ -12,9 +12,9 @@ import wget
 import os
 import time
 # from .pdf2text import to_txt
-from WebContentDownload.pdf2text import to_txt
+from WebContentDownload.pdf2text import to_txt, to_text2
 # from pattern.web import URL
-base_dir = '/Users/keleigong/Google Drive/SCRC 2015 work/auto-rating/'
+base_dir = '/Users/keleigong/Google Drive/SCRC 2015 work/auto-rating/1st/'
 
 
 class Fetcher:
@@ -43,6 +43,7 @@ class Fetcher:
 
     def __del__(self): #解构时需等待两个队列完成
         time.sleep(0.5)
+
         self.q_req.join()
         self.q_ans.join()
 
@@ -136,12 +137,15 @@ if __name__ == "__main__":
     if not os.path.exists(text_dir):
         os.makedirs(text_dir)
 
-    deadlink = codecs.open('deadlink.txt', "w", encoding="utf-8")
+    deadlink = codecs.open('deadlink.txt', "a", encoding="utf-8")
+    processed = codecs.open('processed.txt', "a", encoding="utf-8")
+    processed_urls = processed.read().split('\n')
 
     for company, results in company_all_urls.items():
-        company_files[company] = codecs.open(text_dir + company.replace('/', ' ')+'.txt', "w", encoding="utf-8")
+        company_files[company] = codecs.open(text_dir + company.replace('/', ' ')+'.txt', "a", encoding="utf-8")
         for result in results:
-            urls.append((company, result.link))
+            if result.link not in processed_urls:
+                urls.append((company, result.link))
 # urls = [result.link for result in company_all_urls['BIOGEN']]
 
     f = Fetcher(threads=10)
@@ -155,6 +159,7 @@ if __name__ == "__main__":
             company_files[url[0]].write('\n\n======================================================\n')
             company_files[url[0]].write(url[1].get_full_url()+'\n')
             company_files[url[0]].write(content)
+            processed.write(url[0] + '\n')
         else:
             deadlink.write(url[0] + ', ' + url[1].get_full_url() +',\n')
     for company, file in company_files.items():
