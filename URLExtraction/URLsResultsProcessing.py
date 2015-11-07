@@ -1,9 +1,113 @@
 __author__ = 'keleigong'
 
-from openpyxl import load_workbook
+# from openpyxl import load_workbook
 from openpyxl import Workbook
 import operator
 import json
+
+
+
+category = {'Ariba spend management':	['SM', 'SS', 'CM'],
+            'Beroe':	['CM'],
+            'California Transparency Supply Chain':	['LHR'],
+            'Category Management':	['CM'],
+            'Category team':	['CM'],
+            'Child labor':	['LHR'],
+            'citizenship report':	['LHR', 'ES'],
+            'Continuous supplier improvement process':	['SS', 'SRM'],
+            'Cross-functional category management team':	['CM'],
+            'Cross-functional sourcing team':	['SS', 'CM'],
+            'CSR report':	['LHR', 'ES'],
+            'EDI':	['SM', 'SS'],
+            'EHS':	['LHR'],
+            'EICC':	['SM', 'SS', 'LHR', 'ES'],
+            'Electronic Industry Citizenship Coalition':	['SM', 'SS', 'LHR', 'ES'],
+            'Enterprise Resource Planning':	['SM', 'SS', 'CM'],
+            'Environmental Sustainability':	['ES'],
+            'e-procurement system':	['SM', 'SS'],
+            'ERP':	['SM', 'SS', 'CM'],
+            'Fair Labor Association':	['LHR'],
+            'Global sourcing':	['SRM'],
+            'Green effort':	['ES'],
+            'Health Safety Security Environment':	['SS'],
+            'Human Rights':	['LHR'],
+            'Labor Right':	['LHR'],
+            'Long-term category strategy':	['CM'],
+            'Long-term sourcing strategy':	['SS'],
+            'Minimum Wage':	['LHR'],
+            'Non-governmental Organization':	['LHR'],
+            'Oracle':	['SM', 'SS', 'CM'],
+            'Procurement':	['SM', 'SS'],
+            'Procurement allocation':	['SS'],
+            'Procurement team':	['SM'],
+            'Procure-to-Pay system':	['SM', 'SS'],
+            'Product life cycle':	['ES'],
+            'Responsible sourcing':	['LHR', 'ES'],
+            'Responsible supply chain management':	['LHR', 'ES'],
+            'SAP':	['SM', 'SS', 'CM'],
+            'Second tier supplier audit':	['LHR', 'ES'],
+            'Second tier supplier enforcement':	['LHR', 'ES'],
+            'Service Level Agreement':	['SM', 'SS'],
+            'Source approved vendor list':	['SM', 'SRM'],
+            'Sourcing contract management system':	['SM', 'SS'],
+            'Sourcing Process':	['SM', 'SS'],
+            'Sourcing standards':	['SM', 'SS', 'CM', 'SRM', 'LHR', 'ES'],
+            'Sourcing strategy':	['SS'],
+            'Spend analytics':	['SM', 'SS', 'CM'],
+            'Spend management':	['SM', 'SS', 'CM'],
+            'SRM policy':	['SRM'],
+            'Strategic sourcing':	['SS'],
+            'Supplier':	['SM', 'SS', 'CM', 'SRM'],
+            'Supplier  capacity':	['SS', 'CM'],
+            'Supplier allocation':	['SM', 'SS', 'CM'],
+            'Supplier assessment':	['SM', 'SS'],
+            'Supplier audit':	['SM', 'SS'],
+            'Supplier award':	['SM', 'SS', 'SRM'],
+            'Supplier code of conduct':	['SM', 'SS', 'SRM', 'LHR', 'ES'],
+            'Supplier collaboration':	['SS', 'CM', 'SRM'],
+            'Supplier continuity planning':	['SS', 'SRM'],
+            'Supplier database':	['SM'],
+            'Supplier development plan':	['SS', 'SRM'],
+            'Supplier diversity program':	['SM', 'SS'],
+            'Supplier enforcement program':	['LHR', 'ES'],
+            'Supplier environmental engagement':	['ES'],
+            'Supplier evaluation':	['SM', 'SS'],
+            'Supplier expectation':	['SM', 'SS'],
+            'Supplier feedback':	['CM', 'SRM'],
+            'Supplier guideline':	['SM', 'SS'],
+            'Supplier lawsuit':	['LHR', 'ES'],
+            'Supplier list':	['SM', 'SRM'],
+            'Supplier management':	['SM', 'SS', 'SRM'],
+            'Supplier measurements':	['SM', 'SS'],
+            'Supplier meeting':	['SS', 'SRM'],
+            'Supplier optimization':	['SS', 'CM'],
+            'Supplier portal':	['SM', 'SS', 'SRM'],
+            'Supplier purchase terms and conditions':	['SM', 'SS', 'SRM'],
+            'Supplier registration':	['SM'],
+            'Supplier Relationship Management':	['SRM'],
+            'Supplier requirement':	['SM', 'SS', 'CM', 'SRM'],
+            'Supplier risk management':	['SS', 'CM'],
+            'Supplier scorecard':	['SM', 'SS', 'CM'],
+            'Supplier segmentation':	['SS', 'CM'],
+            'Supplier selection':	['SM', 'SS'],
+            'Supplier summit':	['SS', 'SRM'],
+            'Supplier terminate':	['SM'],
+            'Supplier tracking':	['SM', 'SS', 'LHR', 'ES'],
+            'Supplier training':	['SM', 'SS', 'LHR', 'ES'],
+            'Supplier verification':	['SS'],
+            'Supply base capacity':	['SS', 'CM'],
+            'Supply chain management':	['SM', 'SS', 'CM', 'SRM'],
+            'Supply management system':	['SM', 'SS', 'CM', 'SRM'],
+            'Supply market analysis':	['CM'],
+            'Supply market intelligence':	['CM'],
+            'Supply risk analysis':	['SS', 'CM'],
+            'Sustainability report':	['LHR', 'ES'],
+            'Talent management':	['SRM'],
+            'Vendor code of conduct':	['SM', 'SS', 'SRM', 'LHR', 'ES'],
+            'Vendor expectation':	['SM', 'SS', 'SRM'],
+            'Vendor list':	['SM', 'SRM'],
+            'Vendor management':	['SM', 'SS', 'SRM'],
+            'Vendor portal':	['SM', 'SS', 'CM', 'SRM'],}
 
 class SearchQuery(object):
     def __init__(self, company, query):
@@ -29,6 +133,10 @@ class SearchResult(object):
         self.visible_link = result['visible_link']
         self.count = 1
         self.keywords = [keyword]
+        self.categories = []
+        for keyword in self.keywords:
+            self.categories += category[keyword.strip()]
+        self.categories = list(set(self.categories))
 
     def set_link(self, link):
         self.link = link
@@ -44,106 +152,6 @@ class SearchResult(object):
 
     def __ne__(self, other):
         return not self.__eq__(other)
-
-def urls_processing(filename):
-    '''
-    Preprocessing the urls, delete unreliable urls, change the table format,
-    count the frequency, etc.
-    :param filename(path):
-    :return: create a excel file to store the result.
-    '''
-    wb = load_workbook(filename=filename)
-    ws = wb.get_active_sheet()  # ws is now an IterableWorksheet
-
-    column_index = get_column_index(ws)
-    # print(column_index)
-    urls_with_frequencies = worksheet_processing(ws, column_index)
-    # print(urls_with_frequencies)
-    return write_to_excel(urls_with_frequencies, filename)
-
-
-
-def worksheet_processing(ws, ci):
-    '''
-    :param ws:
-    :param ci:
-    :return:
-    '''
-    years = ['2011', '2012', '2013', '2014', '2015']
-    keywords_to_delete = ['linkedin', 'linkup', 'disabledperson', 'indeed', 'simplyhired',
-                          'career', 'recruit', 'glassdoor', 'jobs', 'monster.com', 'yelp', 'itunes',
-                          'googleadservices', 'wiki', 'www.google.com']
-    urls_with_frequencies = {}
-    for row in ws.rows:
-
-        if row[ci['domain']].value is not None and any(k in row[ci['domain']].value for k in keywords_to_delete):
-            pass
-        else:
-            # print(row[ci['query']].value)
-            if row[ci['company']].value not in urls_with_frequencies.keys():
-                company = row[ci['company']].value
-                urls_with_frequencies[company]= {}
-            else:
-                company = row[ci['company']].value
-
-            if row[ci['link']].value not in urls_with_frequencies[company].keys():
-                urls_with_frequencies[company][row[ci['link']].value] = [1,
-                                                                row[ci['company']].value,
-                                                                row[ci['rank']].value,
-                                                                row[ci['query']].value,
-                                                                row[ci['link_type']].value,
-                                                                row[ci['title']].value,
-                                                                row[ci['domain']].value,
-                                                                row[ci['snippet']].value]
-                if row[ci['snippet']].value is not None:
-                    year = [y for y in years if y in row[ci['snippet']].value[:15]]
-                else:
-                    year = []
-                if len(year) > 0:
-                    urls_with_frequencies[company][row[ci['link']].value].insert(3, year[0])
-                else:
-                    urls_with_frequencies[company][row[ci['link']].value].insert(3, ' ')
-                # if any(x in row[snippet][:15] for x in years):
-                    # urls_with_frequencies[row[link].value].append
-            else:
-                urls_with_frequencies[company][row[ci['link']].value][0] += 1
-                urls_with_frequencies[company][row[ci['link']].value][4] += ', ' + row[ci['query']].value
-    urls_with_frequencies.pop('company')
-    print(urls_with_frequencies.keys())
-    for company in urls_with_frequencies.keys():
-        urls_with_frequencies[company] = sorted(urls_with_frequencies[company].items(),
-                                                key=lambda x: x[1][0], reverse=True)
-    return urls_with_frequencies
-
-
-def get_column_index(ws):
-    column_name = list(map(lambda c: c.value, ws.rows[0]))
-    column_index = {}
-    column_index['company'] = column_name.index('company')
-    column_index['query'] = column_name.index('query')
-    column_index['link_type'] = column_name.index('link_type')
-    column_index['domain'] = column_name.index('domain')
-    column_index['link'] = column_name.index('link')
-    column_index['snippet'] = column_name.index('snippet')
-    column_index['rank'] = column_name.index('rank')
-    column_index['title'] = column_name.index('title')
-
-    return column_index
-
-
-def write_to_excel(urls, filename):
-    # wb2 = Workbook(write_only=True)
-    wb2 = load_workbook(filename)
-    sheet = wb2.create_sheet(0, 'output')
-    sheet.append(['link', 'frequency', 'company', 'rank', 'year', 'query',
-                  'link_type', 'title', 'domain', 'snippet', 'year'])
-    for company in urls.keys():
-        for url in urls[company]:
-            url[1].insert(0, url[0])
-            sheet.append(url[1])
-            pass
-    wb2.save(filename)
-    return filename
 
 def get_company_names(file_path):
     file = open(file_path, 'r')
@@ -209,10 +217,16 @@ def write_to_xlsx(company_all_urls, filename):
     # sheet.append(['link', 'frequency', 'company', 'rank', 'year', 'query',
     #               'link_type', 'title', 'domain', 'snippet', 'year'])
     # sheet.append(company_all_urls)
+    # tmp = list(company_all_urls)
+    # sheet.append(list(urls[0].__dict__.keys()))
+    flag = 1
     for company, urls in company_all_urls.items():
-        sheet.append(list(urls[0].__dict__.keys()))
+        if flag == 1:
+            sheet.append(list(urls[0].__dict__.keys()))
+            flag = 0
         for url in urls:
             url.keywords = ', '.join(url.keywords)
+            url.categories = ','.join(url.categories)
             row = [value for key, value in url.__dict__.items()]
             sheet.append(row)
 
@@ -224,6 +238,12 @@ company_json = json_processing('/Users/keleigong/Dropbox/Python/AUTO_Rating/URLE
 company_querys = query_processing(company_json)
 
 company_all_urls = remove_irrelevant_urls(company_querys)
+
+
+# def URLbyCategory(company_all_urls):
+
+
+
 
 write_to_xlsx(company_all_urls, "1-53.xlsx")
 # print(get_company_names('/Users/keleigong/Dropbox/Python/AUTO_Rating/URLExtraction/concinnity_600/1-50'))
