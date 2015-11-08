@@ -14,7 +14,7 @@ import time
 # from .pdf2text import to_txt
 from WebContentDownload.pdf2text import to_txt, to_text2
 # from pattern.web import URL
-base_dir = '/Users/keleigong/Google Drive/SCRC 2015 work/auto-rating/3rd/'
+base_dir = '/Users/keleigong/Google Drive/SCRC 2015 work/auto-rating/6th/'
 
 
 class Fetcher:
@@ -51,7 +51,7 @@ class Fetcher:
         return self.q_req.qsize()+self.q_ans.qsize()+self.running
 
     def push(self, req):
-        req = (req[0], urllib2.Request(req[1], headers=self.header))
+        req = (req[0], urllib2.Request(req[1], headers=self.header), req[2])
         self.q_req.put(req)
 
     # def is_pdf(self):
@@ -130,8 +130,12 @@ def generate_urls_from_secondary(doc_file):
 
 
 if __name__ == "__main__":
-    company_all_urls = generate_urls_from_json('../URLExtraction/concinnity_600/1-53.json',
-                                                '../URLExtraction/concinnity_600/1-53')
+    # company_all_urls = generate_urls_from_json('../URLExtraction/concinnity_600/54-106.json',
+    #                                             '../URLExtraction/concinnity_600/54-106')
+
+    rows = secondary.generate_rows("/Users/keleigong/Dropbox/Python/AUTO_Rating/TextExtraction/secondary data/2013 Secondary Data.docx")
+    company_all_urls = secondary.get_urls(rows)
+
     urls = []
     company_files = {}
     # base_dir = '1st/'
@@ -146,11 +150,14 @@ if __name__ == "__main__":
         os.makedirs(text_dir)
 
     deadlink = codecs.open('deadlink.txt', "a", encoding="utf-8")
-
-    with open('processed.txt', 'r') as fp:
-        processed_urls = fp.read()
-        if '\n' in processed_urls:
-            processed_urls = processed_urls.split('\n')
+    try:
+        with open('processed.txt', 'r') as fp:
+            processed_urls = fp.read()
+            if '\n' in processed_urls:
+                processed_urls = processed_urls.split('\n')
+    except Exception as what:
+        print(what)
+        processed_urls = []
 
     processed = codecs.open('processed.txt', "a", encoding="utf-8")
 
@@ -158,7 +165,7 @@ if __name__ == "__main__":
         company_files[company] = codecs.open(text_dir + company.replace('/', ' ')+'.txt', "a", encoding="utf-8")
         for result in results:
             if result.link not in processed_urls:
-                urls.append((company, result.link))
+                urls.append((company, result.link, ','.join(result.categories)))
             else:
                 print("This link has been processed " + result.link)
 # urls = [result.link for result in company_all_urls['BIOGEN']]
@@ -173,6 +180,7 @@ if __name__ == "__main__":
         if content != 'deadlink':
             company_files[url[0]].write('\n\n======================================================\n')
             company_files[url[0]].write(url[1].get_full_url()+'\n')
+            company_files[url[0]].write(url[2]+'\n')
             company_files[url[0]].write(content)
             processed.write(url[1].get_full_url() + '\n')
         else:
