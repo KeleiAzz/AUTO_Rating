@@ -4,6 +4,29 @@ from openpyxl import Workbook
 
 from docx.text.paragraph import Paragraph
 
+class LinkCategory(object):
+    def __init__(self, company, link, categories):
+        self.company = company
+        self.link = link
+        if "SRM Evaluation" in categories:
+            self.categories = ["SM", "CM", "SS", "SRM"]
+        elif "LHR Evaluation" in categories:
+            self.categories = ["LHR"]
+        elif "Environmental Sustainability Evaluation" in categories:
+            self.categories = ["ES"]
+        else:
+            self.categories = ["SM", "CM", "SS", "SRM", "LHR", "ES"]
+
+    def __eq__(self, other):
+        # print(self.link, other.link)
+        if (isinstance(other, self.__class__)) and self.link == other.link:
+            other.categories += self.categories
+            other.categories = list(set(other.categories))
+            return True
+        return False
+
+    def __ne__(self, other):
+        return not self.__eq__(other)
 
 
 def is_section(paragraph):
@@ -85,7 +108,10 @@ def generate_rows(doc_file):
                     if current_link != '' and current_brief != '':
                         rows.append(row(current_company, current_section, current_category, current_link, current_brief))
                         current_link, current_brief = '', ''
-                    current_link = p.text
+                    if p.text[0:3] == 'www':
+                        current_link = 'http://' + p.text
+                    else:
+                        current_link = p.text
                     previous_p = p
                     # print('\t\t\t>' + p.text, file=f)
                 else:
@@ -118,21 +144,23 @@ def get_urls(rows):
     for row in rows:
         if row.company in res.keys():
             if len(row.link) > 5:
-                res[row.company].append(row.link)
+                link = LinkCategory(row.company, row.link, row.section)
+                if link not in res[row.company]:
+                    res[row.company].append(link)
         else:
             res[row.company] = []
             if len(row.link) > 5:
-                res[row.company].append(row.link)
-    for key, value in res.items():
-        res[key] = list(set(value))
+                res[row.company].append(LinkCategory(row.company, row.link, row.section))
+    # for key, value in res.items():
+    #     res[key] = list(set(value))
     return res
 
 
 if __name__ == "__main__":
-    doc_file = '/Users/keleigong/Dropbox/Python/AUTO_Rating/TextExtraction/secondary data/2015 secondary data.docx'
-    output_file = '2015_secondary_data.xlsx'
+    doc_file = "/Users/keleigong/Dropbox/Python/AUTO_Rating/TextExtraction/secondary data/(final)2014 SCRC Secondary Data without split.docx"
+    output_file = '2014_secondary_data.xlsx'
     rows = generate_rows(doc_file)
-    output_to_excel(rows, output_file)
+    # output_to_excel(rows, output_file)
     company_all_urls = get_urls(rows)
     for key, value in company_all_urls.items():
         print("{0} has\t {1} unique URLs".format(key, len(value)))
