@@ -14,19 +14,20 @@ import time
 # from .pdf2text import to_txt
 from WebContentDownload.pdf2text import to_txt, to_text2
 # from pattern.web import URL
-base_dir = '/Users/keleigong/Google Drive/SCRC 2015 work/auto-rating/6th/'
 
+BASE_DIR = '/Users/keleigong/Google Drive/SCRC 2015 work/auto-rating/6th/'
+SECONDARY_FILE = "/Users/keleigong/Dropbox/Python/AUTO_Rating/TextExtraction/secondary data/2013 Secondary Data_ORGANIZED.docx"
 
 class Fetcher:
     def __init__(self, threads):
-        global base_dir
+        global BASE_DIR
         self.header = {'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.11 (KHTML, like Gecko) Chrome/23.0.1271.64 Safari/537.11',
                         'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
                         'Accept-Charset': 'ISO-8859-1,utf-8;q=0.7,*;q=0.3',
                         'Accept-Encoding': 'none',
                         'Accept-Language': 'en-US,en;q=0.8',
                         'Connection': 'keep-alive'}
-        self.path = base_dir
+        self.path = BASE_DIR
         self.opener = urllib2.build_opener(urllib2.HTTPHandler)
         # self.opener.addheaders(self.header)
         # self.h = html2text.HTML2Text()
@@ -64,7 +65,7 @@ class Fetcher:
             req = self.q_req.get()
             with self.lock: #要保证该操作的原子性，进入critical area
                 self.running += 1
-            pdf_dir = base_dir + 'company_pdf/' + req[0].replace('/', ' ') + '/'
+            pdf_dir = BASE_DIR + 'company_pdf/' + req[0].replace('/', ' ') + '/'
             if not os.path.exists(pdf_dir):
                 try:
                     os.makedirs(pdf_dir)
@@ -128,24 +129,26 @@ def generate_urls_from_secondary(doc_file):
     company_all_urls = secondary.get_urls(rows)
     return company_all_urls
 
+def prepare(company_all_urls):
+    pass
 
 if __name__ == "__main__":
     # company_all_urls = generate_urls_from_json('../URLExtraction/concinnity_600/54-106.json',
     #                                             '../URLExtraction/concinnity_600/54-106')
 
-    rows = secondary.generate_rows("/Users/keleigong/Dropbox/Python/AUTO_Rating/TextExtraction/secondary data/2013 Secondary Data.docx")
+    rows = secondary.generate_rows(SECONDARY_FILE)
     company_all_urls = secondary.get_urls(rows)
 
     urls = []
     company_files = {}
     # base_dir = '1st/'
-    if not os.path.exists(base_dir):
-        os.makedirs(base_dir)
+    if not os.path.exists(BASE_DIR):
+        os.makedirs(BASE_DIR)
 
-    pdf_dir = base_dir + 'company_pdf/'
+    pdf_dir = BASE_DIR + 'company_pdf/'
     if not os.path.exists(pdf_dir):
-        os.makedirs(base_dir + 'company_pdf/')
-    text_dir = base_dir + 'company_profiles/'
+        os.makedirs(BASE_DIR + 'company_pdf/')
+    text_dir = BASE_DIR + 'company_profiles/'
     if not os.path.exists(text_dir):
         os.makedirs(text_dir)
 

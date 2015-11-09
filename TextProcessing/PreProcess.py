@@ -12,7 +12,8 @@ import re
 import pymysql
 
 
-
+TABLE_NAME = "link_content_2015_only"
+BASE_DIR = '/Users/keleigong/Google Drive/SCRC 2015 work/auto-rating/6th/company_profiles_2015/'
 
 class LinkContent(object):
     def __init__(self, company, link, content, categories):
@@ -110,18 +111,17 @@ def InsertToDB(linkcontent):
     if len(linkcontent.content) > 200:
         try:
             cur = connection.cursor()
-            sql = "INSERT INTO `link_content_2015_sentences` (`company`, `link`, `content`, `categories`) VALUES (%s, %s, %s, %s)"
-            cur.execute(sql, (linkcontent.company, linkcontent.link, linkcontent.content, linkcontent.categories))
+            sql = "INSERT INTO `%s` (`company`, `link`, `content`, `categories`) VALUES (%s, %s, %s, %s)"
+            cur.execute(sql, (TABLE_NAME, linkcontent.company, linkcontent.link, linkcontent.content, linkcontent.categories))
             connection.close()
         except Exception as what:
             print(what, linkcontent.link, len(linkcontent.content))
             connection.close()
     # connection.commit()
 
-
-
-base_dir = '/Users/keleigong/Google Drive/SCRC 2015 work/auto-rating/7th_sentence/c.company_text/company_csv/'
-all_linkcontent = ReadDownloadedContent(base_dir)
+if __name__ == "__main__":
+    BASE_DIR = BASE_DIR
+    all_linkcontent = ReadDownloadedContent(BASE_DIR)
 # InsertToDB(all_linkcontent)
 # sentence = "At eight o'clock on||]*() # Thursday morning Arthur did feel very good. French-Fries"
 # print(preprocess(sentence))
