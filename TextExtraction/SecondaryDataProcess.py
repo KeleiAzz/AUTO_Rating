@@ -4,6 +4,7 @@ from openpyxl import Workbook
 
 from docx.text.paragraph import Paragraph
 
+from openpyxl import Workbook, load_workbook
 class LinkCategory(object):
     def __init__(self, company, link, categories):
         self.company = company
@@ -139,7 +140,8 @@ def output_to_excel(rows, output_file):
     wb.save(output_file)
     print('done')
 
-def get_urls(rows):
+def get_urls_from_docx(filepath):
+    rows = generate_rows(filepath)
     res = {}
     for row in rows:
         if row.company in res.keys():
@@ -155,6 +157,17 @@ def get_urls(rows):
     #     res[key] = list(set(value))
     return res
 
+def get_urls_from_excel(filepath):
+    res = {}
+    wb = load_workbook(filepath, read_only=True)
+    ws = wb.get_sheet_by_name("2015")
+    for row in ws.rows:
+        if 'http' in row[5].value:
+            if row[0].value not in res.keys():
+                res[row[0].value] = [LinkCategory(row[0].value, row[5].value, "ALL")]
+            else:
+                res[row[0].value].append(LinkCategory(row[0].value, row[5].value, "ALL"))
+    return res
 
 if __name__ == "__main__":
     doc_file = "/Users/keleigong/Dropbox/Python/AUTO_Rating/TextExtraction/secondary data/(final)2014 SCRC Secondary Data without split.docx"
