@@ -1,6 +1,5 @@
 __author__ = 'keleigong'
 import string
-import nltk
 from nltk.tokenize import RegexpTokenizer
 from nltk.corpus import stopwords
 from nltk.stem.porter import *
@@ -10,10 +9,56 @@ from os import listdir
 from os.path import isfile, join
 import re
 import pymysql
+from threading import Thread,Lock
+from queue import Queue
+import time
 
 
-TABLE_NAME = "link_content_2015_only"
-BASE_DIR = '/Users/keleigong/Google Drive/SCRC 2015 work/auto-rating/6th/company_profiles_2015/'
+TABLE_NAME = "link_content_13_15_sentences"
+BASE_DIR = '/Users/keleigong/Google Drive/SCRC 2015 work/auto-rating/6th/sentences/2015/'
+DB = 'ml_2015'
+YEAR = 2015
+
+class Processor:
+    def __init__(self, threads):
+        self.lock = Lock() #线程锁
+        self.q_req = Queue() #任务队列
+        self.q_ans = Queue() #完成队列
+        self.threads = threads
+        for i in range(threads):
+            t = Thread(target=self.threadget)
+            t.setDaemon(True)
+            t.start()
+        self.running = 0
+
+    def __del__(self): #解构时需等待两个队列完成
+        time.sleep(0.5)
+
+        self.q_req.join()
+        self.q_ans.join()
+
+    def taskleft(self):
+        return self.q_req.qsize()+self.q_ans.qsize()+self.running
+
+    def push(self, req):
+        # req = (req[0], urllib2.Request(req[1], headers=self.header), req[2])
+        self.q_req.put(req)
+
+    def pop(self):
+        return self.q_ans.get()
+
+    def threadget(self):
+        while True:
+            req = self.q_req.get()
+            with self.lock: #要保证该操作的原子性，进入critical area
+                self.running += 1
+            pass # do something here
+            self.q_ans.put(req)
+            with self.lock:
+                self.running -= 1
+            self.q_req.task_done()
+            time.sleep(0.5)  # don't spam
+
 
 class LinkContent(object):
     def __init__(self, company, link, content, categories):
@@ -102,7 +147,7 @@ def InsertToDB(linkcontent):
     connection = pymysql.connect(host='localhost',
                                  user='root',
                                  password='1423',
-                                 db='ml_2015',
+                                 db=DB,
                                  # charset='utf8mb4',
                                  cursorclass=pymysql.cursors.DictCursor,
                                  autocommit=True)
@@ -111,8 +156,8 @@ def InsertToDB(linkcontent):
     if len(linkcontent.content) > 200:
         try:
             cur = connection.cursor()
-            sql = "INSERT INTO `%s` (`company`, `link`, `content`, `categories`) VALUES (%s, %s, %s, %s)"
-            cur.execute(sql, (TABLE_NAME, linkcontent.company, linkcontent.link, linkcontent.content, linkcontent.categories))
+            sql = "INSERT INTO `link_content_13_15_sentences` (`company`, `link`, `content`, `categories`, `year`) VALUES ( %s, %s, %s, %s, %s)"
+            cur.execute(sql, (linkcontent.company, linkcontent.link, linkcontent.content, linkcontent.categories, YEAR,))
             connection.close()
         except Exception as what:
             print(what, linkcontent.link, len(linkcontent.content))
@@ -120,8 +165,12 @@ def InsertToDB(linkcontent):
     # connection.commit()
 
 if __name__ == "__main__":
-    BASE_DIR = BASE_DIR
+    # dir_path = BASE_DIR
     all_linkcontent = ReadDownloadedContent(BASE_DIR)
 # InsertToDB(all_linkcontent)
 # sentence = "At eight o'clock on||]*() # Thursday morning Arthur did feel very good. French-Fries"
 # print(preprocess(sentence))
+
+
+
+
