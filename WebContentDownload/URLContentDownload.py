@@ -16,7 +16,8 @@ from WebContentDownload.pdf2text import to_txt, to_text2
 # from pattern.web import URL
 
 BASE_DIR = '/Users/keleigong/Google Drive/SCRC 2015 work/auto-rating/6th/'
-SECONDARY_FILE = "/Users/keleigong/Dropbox/Python/AUTO_Rating/TextExtraction/secondary data/2013 Secondary Data_ORGANIZED.docx"
+SECONDARY_FILE = "/Users/keleigong/Dropbox/Python/AUTO_Rating/TextExtraction/secondary data/2015 secondary data.docx"
+EXCEL_FILE = "/Users/keleigong/Dropbox/Python/AUTO_Rating/TextExtraction/secondary data/EDGAE_by_year.xlsx"
 
 class Fetcher:
     def __init__(self, threads):
@@ -72,7 +73,7 @@ class Fetcher:
                 except:
                     print("dir already there")
             try:
-                ans = self.opener.open(req[1], timeout=5)
+                ans = self.opener.open(req[1], timeout=15)
                 if 'pdf' in ans.getheader('Content-Type') or '.pdf' in req[0]:
                     filename = req[0].replace('/', ' ') + str(self.pdfcounter) + '.pdf'
                     file = open(pdf_dir + filename, 'wb')
@@ -113,10 +114,8 @@ class Fetcher:
             with self.lock:
                 self.running -= 1
             self.q_req.task_done()
-            time.sleep(0.1)  # don't spam
+            time.sleep(0.5)  # don't spam
 
-# if __name__ == "__main__":
-#     links = [ 'http://www.verycd.com/topics/%d/'%i for i in range(5420,5430) ]
 
 def generate_urls_from_json(json_file, company_name_file):
     company_json = URL.json_processing(json_file, company_name_file)
@@ -124,10 +123,10 @@ def generate_urls_from_json(json_file, company_name_file):
     company_all_urls = URL.remove_irrelevant_urls(company_querys)
     return company_all_urls
 
-def generate_urls_from_secondary(doc_file):
-    rows = secondary.generate_rows(doc_file)
-    company_all_urls = secondary.get_urls(rows)
-    return company_all_urls
+# def generate_urls_from_secondary(doc_file):
+#     rows = secondary.generate_rows(doc_file)
+#     company_all_urls = secondary.get_urls(rows)
+#     return company_all_urls
 
 def prepare(company_all_urls):
     pass
@@ -136,12 +135,11 @@ if __name__ == "__main__":
     # company_all_urls = generate_urls_from_json('../URLExtraction/concinnity_600/54-106.json',
     #                                             '../URLExtraction/concinnity_600/54-106')
 
-    rows = secondary.generate_rows(SECONDARY_FILE)
-    company_all_urls = secondary.get_urls(rows)
+    # company_all_urls = secondary.get_urls_from_docx(SECONDARY_FILE)
+    company_all_urls = secondary.get_urls_from_excel(EXCEL_FILE)
 
     urls = []
     company_files = {}
-    # base_dir = '1st/'
     if not os.path.exists(BASE_DIR):
         os.makedirs(BASE_DIR)
 
@@ -171,7 +169,6 @@ if __name__ == "__main__":
                 urls.append((company, result.link, ','.join(result.categories)))
             else:
                 print("This link has been processed " + result.link)
-# urls = [result.link for result in company_all_urls['BIOGEN']]
 
     f = Fetcher(threads=15)
     h = html2text.HTML2Text()
@@ -194,4 +191,3 @@ if __name__ == "__main__":
 
     deadlink.close()
     processed.close()
-    # print(len(h.handle(content.decode('ISO-8859-1'))))
