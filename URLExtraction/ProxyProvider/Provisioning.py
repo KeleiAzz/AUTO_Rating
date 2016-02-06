@@ -26,6 +26,7 @@ def main():
                 action = arg
         if action.lower() == 'start':
             aws.startAllInstances(key)
+            update_proxy()
             print('All instances started, inventory file updated')
         elif action.lower() == 'stop':
             aws.stopAllInstances()
@@ -55,6 +56,25 @@ def main():
     except getopt.GetoptError:
         print('Provisioning.py -n <number of instances/droplets> -p <provider:aws or DO>')
         sys.exit(1)
+
+def update_proxy():
+    f = open('inventory', 'r')
+    text = f.read()
+    f.close()
+    text = text.split('\n')
+    res = []
+    for line in text:
+        # print(line.split(' '))
+        if len(line) > 2:
+            ip = line.split(' ')[1]
+            ip = ip.split('=')[-1]
+            res.append(ip)
+
+    f = open('proxy.txt', 'w')
+    for i in res:
+        f.write('socks5 ' + i + ':10080' + '\n')
+    f.close()
+
 
 if __name__ == "__main__":
     main()
