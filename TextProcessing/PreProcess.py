@@ -9,15 +9,12 @@ from os import listdir
 from os.path import isfile, join
 import re
 import pymysql
-from threading import Thread,Lock
+from threading import Thread, Lock
 from queue import Queue
 import time
+# from .InsertIntoDB import ReadDownloadedContent
 
 
-TABLE_NAME = "link_content_13_15_sentences"
-BASE_DIR = '/Users/keleigong/Google Drive/SCRC 2015 work/auto-rating/6th/sentences/2015/'
-DB = 'ml_2015'
-YEAR = 2015
 
 class Processor:
     def __init__(self, threads):
@@ -61,11 +58,12 @@ class Processor:
 
 
 class LinkContent(object):
-    def __init__(self, company, link, content, categories):
+    def __init__(self, company, link, content, categories, year=None):
         self.company = company
         self.link = link
         self.content = content
         self.categories = categories
+        self.year = year
 
     def preprocess(self, stem=False):
         stemmer = SnowballStemmer("english")
@@ -73,10 +71,14 @@ class LinkContent(object):
         tokenizer = RegexpTokenizer(r'\w+')
         tokens = tokenizer.tokenize(sentence)
         if stem:
-            filtered_words = [stemmer.stem(w) for w in tokens if not w in stopwords.words('english')]
+            filtered_words = [stemmer.stem(w) for w in tokens if w not in stopwords.words('english')]
         else:
-            filtered_words = [w for w in tokens if not w in stopwords.words('english')]
+            filtered_words = [w for w in tokens if w not in stopwords.words('english')]
         self.content =  " ".join(filtered_words)
+        self.content = re.sub('\d+', ' ', self.content)
+        self.content = re.sub('\s+', ' ', self.content)
+        shortword = re.compile(r'\W*\b\w{1}\b')
+        self.content = shortword.sub('', self.content)
 
     # def stemming(self):
     #     stemmer = SnowballStemmer("english")
@@ -114,8 +116,8 @@ def ReadDownloadedContent(path, output="DB", process=False, stem=False):
                     all_linkcontent.append(LinkContent(company, link, content, categories))
                     if process:
                         all_linkcontent[-1].preprocess(stem)
-                    if output == "DB":
-                        InsertToDB(all_linkcontent[-1])
+                    # if output == "DB":
+                    #     InsertToDB(all_linkcontent[-1])
                     # print(len(content))
                     # except Exception as what:
                     #     print(what)
@@ -134,39 +136,16 @@ def ReadDownloadedContent(path, output="DB", process=False, stem=False):
                 category_flag = 0
             else:
                 content += line.rstrip('\n') + " "
-        if len(content) > 100:
+        if len(content) > 100 and "sec.gov/Archives/edgar" not in link:
             all_linkcontent.append(LinkContent(company, link, content, categories))
             if process:
                 all_linkcontent[-1].preprocess(stem)
-            if output == "DB":
-                InsertToDB(all_linkcontent[-1])
+            # if output == "DB":
+                # InsertToDB(all_linkcontent[-1])
     return all_linkcontent
 
-def InsertToDB(linkcontent):
-    # linkcontent = all_linkcontent[0]
-    connection = pymysql.connect(host='localhost',
-                                 user='root',
-                                 password='1423',
-                                 db=DB,
-                                 # charset='utf8mb4',
-                                 cursorclass=pymysql.cursors.DictCursor,
-                                 autocommit=True)
-    # sql = "SELECT `link` FROM `link_content_2014` WHERE `company_name`=%s"
-    # for linkcontent in all_linkcontent:
-    if len(linkcontent.content) > 200:
-        try:
-            cur = connection.cursor()
-            sql = "INSERT INTO `link_content_13_15_sentences` (`company`, `link`, `content`, `categories`, `year`) VALUES ( %s, %s, %s, %s, %s)"
-            cur.execute(sql, (linkcontent.company, linkcontent.link, linkcontent.content, linkcontent.categories, YEAR,))
-            connection.close()
-        except Exception as what:
-            print(what, linkcontent.link, len(linkcontent.content))
-            connection.close()
-    # connection.commit()
+# def generate_profile_files():
 
-if __name__ == "__main__":
-    # dir_path = BASE_DIR
-    all_linkcontent = ReadDownloadedContent(BASE_DIR)
 # InsertToDB(all_linkcontent)
 # sentence = "At eight o'clock on||]*() # Thursday morning Arthur did feel very good. French-Fries"
 # print(preprocess(sentence))

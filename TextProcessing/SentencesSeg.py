@@ -4,6 +4,56 @@ __author__ = 'keleigong'
 import re
 import pymysql
 from TextProcessing.PreProcess import LinkContent, ReadDownloadedContent
+from TextProcessing.Keywords import SM_step2, SS_step2, CM_step2, SRM_step2, LHR_step2, ES_step2
+from TextProcessing.Keywords import SM_original, SS_original, CM_original, SRM_original, LHR_original, ES_original
+import os
+step1_0 = [
+    "Ariba",
+    "EDI",
+    "EICC",
+    "Electronic data interchange",
+    "Electronic Industry Citizenship Coalition",
+    "Enterprise Resource Planning",
+    "ERP",
+    "green supply",
+    "ILO",
+    "International labor association",
+    "Oracle",
+    "procurement",
+    "procurements",
+    "purchasing",
+    "SAP",
+    "social",
+    "sourcing",
+    "spend management",
+    "supply chain",
+    "Sustainable supply"
+]
+
+step1_1 = [
+    "second tier",
+    "source",
+    "sources",
+    "sub tier",
+    "subtier",
+    "supplier",
+    "suppliers",
+    "vendor",
+    "vendors"
+]
+
+step1_2 = [
+    "contractor",
+    "contractors",
+    "partner",
+    "partners",
+    "provider",
+    "providers",
+    "sub contractor",
+    "sub contractors",
+    "subcontractor",
+    "subcontractors"
+]
 
 def get_company_names():
     conn = pymysql.connect(host='localhost',
@@ -12,7 +62,7 @@ def get_company_names():
                            db='ml_2015',
                            cursorclass=pymysql.cursors.DictCursor)
     cur = conn.cursor()
-    sql="SELECT DISTINCT `company` FROM `link_content_13_15`"
+    sql = "SELECT DISTINCT `company` FROM `link_content_13_15`"
     cur.execute(sql)
     res = []
     for row in cur:
@@ -26,11 +76,11 @@ def read_content_from_db(company):
                            db='ml_2015',
                            cursorclass=pymysql.cursors.DictCursor)
     cur = conn.cursor()
-    sql="SELECT `link`, `content`, `categories` FROM `link_content_13_15` WHERE `company`=%s"
+    sql = "SELECT `link`, `content`, `categories`, `year` FROM `link_content_13_15` WHERE `company`=%s AND `link` not like \"%%sec.gov/Archives%%\" "
     cur.execute(sql, (company,))
     res = []
     for row in cur:
-        res.append(row)
+        res.append(LinkContent(company, row['link'], row['content'], row['categories'], row['year']))
     return res
 
 
@@ -54,8 +104,8 @@ def split_content_to_sentences(content):
 def extract_sentences(sentences, keywords, n):
     res = []
     for i in range(len(sentences)):
-        words = sentences[i].split(' ')
-        if any( keyword in words for keyword in keywords):
+        # words = sentences[i].split(' ')
+        if any(keyword.lower() in sentences[i] for keyword in keywords):
             res.append(i)
     indexs = []
     for i in res:
@@ -69,30 +119,157 @@ def extract_sentences(sentences, keywords, n):
         sen.append(sentences[i])
     return sen
 
-def extract_sentences_for_all(keywords, path=None):
+def extract_sentences_from_DB(keywords_0, keywords_1=None, keywords_2=None, path=None, num_sen=1, category="ALL"):
     res = {}
     companies = get_company_names()
-    for company in companies[0:5]:
-        if path is not None:
-            f = codecs.open(path + company.replace('/', ' ')+'.txt', "w", encoding="utf-8")
+    if path is not None:
+        if category != "ALL":
+            path = path + category + '/'
+        try:
+            os.makedirs(path + '2015/')
+        except:
+            pass
+        try:
+            os.makedirs(path + '2013/')
+        except:
+            pass
+        try:
+            os.makedirs(path + '2014/')
+        except:
+            pass
+
+    for company in companies:
+        contents = read_content_from_db(company)
+        if len(contents) == 0:
+            continue
+        if path is not None and len(contents) > 0:
+            f = codecs.open(path + str(contents[0].year) + '/' + company.replace('/', ' ')+'.txt', "w", encoding="utf-8")
         print('Working on ' + company)
         res[company] = []
-        contents = read_content_from_db(company)
+
         for row in contents:
-            original_sentences = split_content_to_sentences(row['content'])
-            sentences = extract_sentences(original_sentences, keywords, 2)
-            if len(sentences) > 0:
-                new_content = '.\n'.join(sentences)
-                res[company].append(LinkContent(company, row['link'], new_content, row['categories']))
-                if path is not None:
-                    f.write('\n\n======================================================\n')
-                    f.write(res[company][-1].link + '\n')
-                    f.write(res[company][-1].categories + '\n')
-                    f.write(res[company][-1].content + '\n')
+            if category == 'ALL':
+                original_sentences = split_content_to_sentences(row.content)
+                if keywords_0 is not None:
+                    sentences = extract_sentences(original_sentences, keywords_0, num_sen)
+                else:
+                    sentences = original_sentences
+                sentences_2 = []
+                if keywords_1 is not None:
+                    sentences_2 = extract_sentences(original_sentences, keywords_1, num_sen)
+                if keywords_2 is not None and len(sentences_2) == 0:
+                    # print("NO hit in keywords 0")
+                    sentences_2 = extract_sentences(original_sentences, keywords_2, num_sen)
+                sentences += sentences_2
+                sentences = list(set(sentences))
+                if len(sentences) > 0:
+                    new_content = '.\n'.join(sentences)
+                    res[company].append(LinkContent(company, row.link, new_content, row.categories))
+                    if path is not None:
+                        f.write('\n\n======================================================\n')
+                        f.write(res[company][-1].link + '\n')
+                        f.write(res[company][-1].categories + '\n')
+                        f.write(res[company][-1].content + '\n')
+            elif category in row.categories:
+                original_sentences = split_content_to_sentences(row.content)
+                if keywords_0 is not None:
+                    sentences = extract_sentences(original_sentences, keywords_0, num_sen)
+                else:
+                    sentences = original_sentences
+                sentences_2 = []
+                if keywords_1 is not None:
+                    sentences_2 = extract_sentences(original_sentences, keywords_1, num_sen)
+                if keywords_2 is not None and len(sentences_2) == 0:
+                    # print("NO hit in keywords 0")
+                    sentences_2 = extract_sentences(original_sentences, keywords_2, num_sen)
+                sentences += sentences_2
+                sentences = list(set(sentences))
+                if len(sentences) > 0:
+                    new_content = '.\n'.join(sentences)
+                    res[company].append(LinkContent(company, row.link, new_content, row.categories))
+                    if path is not None:
+                        f.write('\n\n======================================================\n')
+                        f.write(res[company][-1].link + '\n')
+                        f.write(res[company][-1].categories + '\n')
+                        f.write(res[company][-1].content + '\n')
+
     return res
 
+def extract_sentences_from_dir(keywords_0, keywords_1=None, keywords_2=None, category="ALL", in_path=None, out_path=None, num_sen=1):
+    res = {}
+    all_link_content = ReadDownloadedContent(in_path, output=None)
+    companies = {}
+    for link_content in all_link_content:
+        if link_content.company in companies.keys():
+            companies[link_content.company].append(link_content)
+        else:
+            companies[link_content.company] = [link_content]
+    if out_path is not None:
+        try:
+            os.makedirs(out_path)
+        except:
+            print("dir already there")
+    for company, contents in companies.items():
+        if out_path is not None:
+            f = codecs.open(out_path + company.replace('/', ' ')+'.txt', "w", encoding="utf-8")
+        print('Working on ' + company)
+        res[company] = []
+        # contents = read_content_from_db(company)
+        for row in contents:
+            if category == "ALL":
+                original_sentences = split_content_to_sentences(row.content)
+                sentences = extract_sentences(original_sentences, keywords_0, num_sen)
+                if len(sentences) == 0 and keywords_1 is not None:
+                    # print("NO hit in keywords 0")
+                    sentences = extract_sentences(original_sentences, keywords_1, num_sen)
+                if len(sentences) == 0 and keywords_2 is not None:
+                    # print("NO hit in keywords 1")
+                    sentences = extract_sentences(original_sentences, keywords_2, num_sen)
+                if len(sentences) > 0:
+                    new_content = '.\n'.join(sentences)
+                    res[company].append(LinkContent(company, row.link, new_content, row.categories))
+                    if out_path is not None:
+                        f.write('\n\n======================================================\n')
+                        f.write(res[company][-1].link + '\n')
+                        f.write(res[company][-1].categories + '\n')
+                        f.write(res[company][-1].content + '\n')
+            elif category in row.categories:
+                original_sentences = split_content_to_sentences(row.content)
+                sentences = extract_sentences(original_sentences, keywords_0, num_sen)
+                if len(sentences) == 0 and keywords_1 is not None:
+                    # print("NO hit in keywords 0")
+                    sentences = extract_sentences(original_sentences, keywords_1, num_sen)
+                if len(sentences) == 0 and keywords_2 is not None:
+                    # print("NO hit in keywords 1")
+                    sentences = extract_sentences(original_sentences, keywords_2, num_sen)
+                if len(sentences) > 0:
+                    new_content = '.\n'.join(sentences)
+                    res[company].append(LinkContent(company, row.link, new_content, row.categories))
+                    if out_path is not None:
+                        f.write('\n\n======================================================\n')
+                        f.write(res[company][-1].link + '\n')
+                        f.write(res[company][-1].categories + '\n')
+                        f.write(res[company][-1].content + '\n')
+    return res
 
 # contents = read_content_from_db()
 # companies = get_company_names()
 if __name__ == "__main__":
-    tmp = extract_sentences_for_all(['supplier', 'suppliers', 'vendor'], path='/Users/keleigong/Dropbox/Python/AUTO_Rating/TextProcessing/')
+    keywords = {"SS": SS_original, "CM": CM_original, "SRM": SRM_original, "LHR": LHR_original, "ES": ES_original}
+    for category, keyword in keywords.items():
+        tmp = extract_sentences_from_DB(
+        keyword,
+        # keywords_1=step1_1,
+        # keywords_2=step1_2,
+        path='/Users/keleigong/Google Drive/SCRC 2015 work/auto-rating/6th/no edgar/sentences_original/',
+        num_sen=3,
+        category=category
+        )
+    # tmp = extract_sentences_from_dir(
+    #     SM_original,
+    #     category="SM",
+    #     in_path="/Users/keleigong/Google Drive/SCRC 2015 work/auto-rating/8th/sentences/step1/2015/",
+    #     out_path="/Users/keleigong/Google Drive/SCRC 2015 work/auto-rating/8th/sentences/step2/ES/2015/",
+    #     num_sen=0,
+    # )
+    # all_content = ReadDownloadedContent("/Users/keleigong/Google Drive/SCRC 2015 work/auto-rating/6th/sentences/step1/")
