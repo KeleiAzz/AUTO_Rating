@@ -5,7 +5,8 @@ from openpyxl import Workbook
 import operator
 import json
 
-
+JSON_FILE = ""
+COMPANY_NAME_FILE = ""
 
 category = {'Ariba spend management':	['SM', 'SS', 'CM'],
             'Beroe':	['CM'],
@@ -112,15 +113,23 @@ category = {'Ariba spend management':	['SM', 'SS', 'CM'],
 class SearchQuery(object):
     def __init__(self, company, query):
         self.company = company
-        self.keyword = ' '.join(query['query'].split(' ')[len(company.split(' ')):])
+        # self.keyword = ' '.join(query['query'].split(' ')[len(company.split(' ')):])
+        self.keyword = query['query'].replace(company, '').strip()
+        # print(self.keyword, '---', self.company, query['query'])
         self.id = query['id']
+        self.num_results_for_query = query["num_results_for_query"].replace(",", "")
+        self.num_results_for_query = [x for x in self.num_results_for_query.split() if x.isdigit()][0]
+        try:
+            self.num_results_for_query = int(self.num_results_for_query)
+        except Exception as e:
+            print(e)
         self.results = []
         for result in query['results']:
             if result['link_type'] == 'results' and result['link'][0:4] == 'http':
-                self.results.append(SearchResult(company, result, self.keyword))
+                self.results.append(SearchResult(company, result, self.keyword, self.num_results_for_query))
 
 class SearchResult(object):
-    def __init__(self, company, result, keyword):
+    def __init__(self, company, result, keyword, num_results):
         self.company = company
         self.domain = result['domain']
         self.id = result['id']
@@ -134,6 +143,7 @@ class SearchResult(object):
         self.count = 1
         self.keywords = [keyword]
         self.categories = []
+        self.num_results_for_query = num_results
         for keyword in self.keywords:
             self.categories += category[keyword.strip()]
         self.categories = list(set(self.categories))
@@ -141,11 +151,18 @@ class SearchResult(object):
     def set_link(self, link):
         self.link = link
 
+    def update_categories(self):
+        self.categories = []
+        for keyword in self.keywords:
+            self.categories += category[keyword.strip()]
+        self.categories = list(set(self.categories))
+
     def __eq__(self, other):
         # print(self.link, other.link)
         if (isinstance(other, self.__class__)) and self.link == other.link:
             other.count += 1
-            other.rank = min(self.rank, other.rank)
+            other.rank = int(self.rank) + int(other.rank)
+            other.num_results_for_query = int(self.num_results_for_query) + int(other.num_results_for_query)
             other.keywords.append(self.keywords[0])
             return True
         return False
@@ -158,10 +175,10 @@ def get_company_names(file_path):
     companies_names = file.read()
     file.close()
     companies_names = companies_names.split('\n')
-    for i in range(len(companies_names)):
-        company_splited = companies_names[i].split(' ')
-        if company_splited[-1] in ["INC", 'CORP']:
-            companies_names[i] = ' '.join(company_splited[0:-1])
+    # for i in range(len(companies_names)):
+    #     company_splited = companies_names[i].split(' ')
+    #     if company_splited[-1] in ["INC", 'CORP']:
+    #         companies_names[i] = ' '.join(company_splited[0:-1])
             # print(companies_names[i])
     return companies_names
 
@@ -207,6 +224,8 @@ def remove_irrelevant_urls(company_querys):
                 else:
                     company_all_urls[company].append(result)
     for company, urls in company_all_urls.items():
+        for url in urls:
+            url.update_categories()
         urls.sort(key=lambda x: x.count,reverse=True)
         company_all_urls[company] = list(filter(lambda x: x.count>2, urls))
     return company_all_urls
@@ -220,6 +239,7 @@ def write_to_xlsx(company_all_urls, filename):
     # tmp = list(company_all_urls)
     # sheet.append(list(urls[0].__dict__.keys()))
     flag = 1
+    print(len(company_all_urls.keys()))
     for company, urls in company_all_urls.items():
         if flag == 1:
             sheet.append(list(urls[0].__dict__.keys()))
@@ -233,19 +253,24 @@ def write_to_xlsx(company_all_urls, filename):
     wb2.save(filename)
     return filename
 
-company_json = json_processing('/Users/keleigong/Dropbox/Python/AUTO_Rating/URLExtraction/concinnity_600/1-53.json',
-                               '/Users/keleigong/Dropbox/Python/AUTO_Rating/URLExtraction/concinnity_600/1-53')
-company_querys = query_processing(company_json)
 
-company_all_urls = remove_irrelevant_urls(company_querys)
+if __name__ == "__main__":
+    file_names = ["1-30", "31-60", "61-120", "121-179", "180-220", "221-260"]
+    for file_name in file_names:
+        company_json = json_processing('/Users/keleigong/Dropbox/Python/AUTO_Rating/URLExtraction/concinnity_600/%s.json' % (file_name, ),
+                               '/Users/keleigong/Dropbox/Python/AUTO_Rating/URLExtraction/concinnity_600/%s' % (file_name, ))
+        company_querys = query_processing(company_json)
 
+        company_all_urls = remove_irrelevant_urls(company_querys)
+
+        write_to_xlsx(company_all_urls, "%s.xlsx" % (file_name,))
 
 # def URLbyCategory(company_all_urls):
 
 
 
 
-write_to_xlsx(company_all_urls, "1-53.xlsx")
+
 # print(get_company_names('/Users/keleigong/Dropbox/Python/AUTO_Rating/URLExtraction/concinnity_600/1-50'))
 # company = {}
 # count = {}
