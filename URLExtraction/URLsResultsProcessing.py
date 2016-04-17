@@ -4,6 +4,8 @@ __author__ = 'keleigong'
 from openpyxl import Workbook
 import operator
 import json
+import sqlite3
+from collections import defaultdict
 
 JSON_FILE = ""
 COMPANY_NAME_FILE = ""
@@ -123,6 +125,7 @@ class SearchQuery(object):
             self.num_results_for_query = int(self.num_results_for_query)
         except Exception as e:
             print(e)
+        self.filter = ['erp', 'ariba', 'oracle', 'sap', 'sage', 'edi', 'supplier', 'vendor', 'supply']
         self.results = []
         for result in query['results']:
             if result['link_type'] == 'results' and result['link'][0:4] == 'http':
@@ -170,43 +173,86 @@ class SearchResult(object):
     def __ne__(self, other):
         return not self.__eq__(other)
 
+
 def get_company_names(file_path):
-    file = open(file_path, 'r')
-    companies_names = file.read()
-    file.close()
-    companies_names = companies_names.split('\n')
-    # for i in range(len(companies_names)):
-    #     company_splited = companies_names[i].split(' ')
-    #     if company_splited[-1] in ["INC", 'CORP']:
-    #         companies_names[i] = ' '.join(company_splited[0:-1])
-            # print(companies_names[i])
+    with open(file_path, 'r') as file:
+        companies_names = file.read()
+    companies_names = companies_names.strip().split('\n')
     return companies_names
 
-def json_processing(json_file, company_file):
-    file = open(json_file)
-    json_str = file.read()
-    file.close()
-    json_data = json.loads(json_str)
+
+def get_company_query_from_json(json_file, company_file):
+    '''
+    return a dict, keys are company names, values are queries belong to that company.
+    :param json_file:
+    :param company_file:
+    :return:
+    '''
+    with open(json_file, 'r') as file:
+        json_str = file.read()
+        json_data = json.loads(json_str)
     company_names = get_company_names(company_file)
     company_json = {}
     for name in company_names:
         company_json[name] = []
-    for line in json_data:
+    for query_result in json_data:
         for name in company_names:
-            if name in line['query']:
-                company_json[name].append(line)
+            if name in query_result['query']:
+                company_json[name].append(query_result)
                 break
     return company_json
 
 
 def query_processing(company_json):
     company_querys = {}
+    # print(company_json)
     for company in company_json.keys():
         company_querys[company] = []
     for company, querys in company_json.items():
         for query in querys:
             company_querys[company].append(SearchQuery(company, query))
     return company_querys
+
+
+def get_company_query_from_db(company_file):
+    '''
+    read query data from .db file, sometimes the json file may get corrupted.
+    :param company_file:
+    :return:
+    '''
+    db_file = company_file + '.db'
+    def dict_factory(cursor, row):
+        d = {}
+        for idx, col in enumerate(cursor.description):
+            d[col[0]] = row[idx]
+        return d
+    conn = sqlite3.connect(db_file)
+    conn.row_factory = dict_factory
+    c = conn.cursor()
+    company_json = defaultdict(dict)
+    with open(company_file, 'r') as f:
+        sql = "select l.id as id, title, snippet, link, visible_link, domain, rank, link_type, serp_id, query, " \
+              "num_results_for_query from link as l, serp as s where l.serp_id=s.id"
+        names = f.read().strip().split('\n')
+        for row in c.execute(sql):
+            for name in names:
+                name = name.strip()
+                if name in row['query']:
+                    tmp = row.copy()
+                    tmp.pop('query')
+                    tmp.pop('num_results_for_query')
+                    if row['query'] in company_json[name]:
+                        company_json[name][row['query']]['results'].append(tmp)
+                    else:
+                        company_json[name][row['query']] = {'query': row['query'],
+                                                            'num_results_for_query': row['num_results_for_query'],
+                                                            'id': row['id'],
+                                                            'results':[tmp]}
+                    break
+        for name in company_json:
+            company_json[name] = company_json[name].values()
+    return company_json
+
 
 def remove_irrelevant_urls(company_querys):
     keywords_to_delete = ['linkedin', 'linkup', 'disabledperson', 'indeed', 'simplyhired',
@@ -233,11 +279,6 @@ def remove_irrelevant_urls(company_querys):
 def write_to_xlsx(company_all_urls, filename):
     wb2 = Workbook(filename)
     sheet = wb2.create_sheet(0, 'output')
-    # sheet.append(['link', 'frequency', 'company', 'rank', 'year', 'query',
-    #               'link_type', 'title', 'domain', 'snippet', 'year'])
-    # sheet.append(company_all_urls)
-    # tmp = list(company_all_urls)
-    # sheet.append(list(urls[0].__dict__.keys()))
     flag = 1
     print(len(company_all_urls.keys()))
     for company, urls in company_all_urls.items():
@@ -255,16 +296,21 @@ def write_to_xlsx(company_all_urls, filename):
 
 
 if __name__ == "__main__":
-    file_names = ["1-30", "31-60", "61-120", "121-179", "180-220", "221-260"]
-    for file_name in file_names:
-        company_json = json_processing('/Users/keleigong/Dropbox/Python/AUTO_Rating/URLExtraction/concinnity_600/%s.json' % (file_name, ),
-                               '/Users/keleigong/Dropbox/Python/AUTO_Rating/URLExtraction/concinnity_600/%s' % (file_name, ))
-        company_querys = query_processing(company_json)
-
-        company_all_urls = remove_irrelevant_urls(company_querys)
-
-        write_to_xlsx(company_all_urls, "%s.xlsx" % (file_name,))
-
+    # file_names = ["1-30", "31-60", "61-90", "91-120", "121-150", "151-180", "181-210",
+    #               "211-240", "241-270", '271-300', '301-330', '331-360', '361-390', '391-420',
+    #               '421-450', '451-480', '481-520', '521-563', '564-606']
+    # for file_name in file_names:
+    #     company_json = json_processing('/Users/keleigong/Dropbox/Python/AUTO_Rating/URLExtraction/606/%s.json' % (file_name, ),
+    #                            '/Users/keleigong/Dropbox/Python/AUTO_Rating/URLExtraction/606/%s' % (file_name, ))
+    #     company_querys = query_processing(company_json)
+    #
+    #     company_all_urls = remove_irrelevant_urls(company_querys)
+    #
+    #     write_to_xlsx(company_all_urls, "/Users/keleigong/Dropbox/Python/AUTO_Rating/URLExtraction/606/%s.xlsx" % (file_name,))
+    company_json = get_company_query_from_db("606/1-30")
+    company_querys = query_processing(company_json)
+    company_all_urls = remove_irrelevant_urls(company_querys)
+    write_to_xlsx(company_all_urls, "/Users/keleigong/Dropbox/Python/AUTO_Rating/URLExtraction/606/1-30_db.xlsx")
 # def URLbyCategory(company_all_urls):
 
 
