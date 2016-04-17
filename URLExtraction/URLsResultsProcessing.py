@@ -214,13 +214,19 @@ def query_processing(company_json):
     return company_querys
 
 
-def get_company_query_from_db(company_file):
+def get_company_query_from_db(company_file, db_file=None):
     '''
     read query data from .db file, sometimes the json file may get corrupted.
     :param company_file:
-    :return:
+    :return: dict, keys are company names, values are their query results.
+    {'company_1': [{'query': "query 1", 'results': [....]},
+                   {'query': "query 2", 'results': [....]}],
+     'company_2': [{'query': "query 1", 'results': [....]},
+                   {'query': "query 2", 'results': [....]}]
+    }
     '''
-    db_file = company_file + '.db'
+    if not db_file:
+        db_file = company_file + '.db'
     def dict_factory(cursor, row):
         d = {}
         for idx, col in enumerate(cursor.description):
@@ -311,25 +317,4 @@ if __name__ == "__main__":
     company_querys = query_processing(company_json)
     company_all_urls = remove_irrelevant_urls(company_querys)
     write_to_xlsx(company_all_urls, "/Users/keleigong/Dropbox/Python/AUTO_Rating/URLExtraction/606/1-30_db.xlsx")
-# def URLbyCategory(company_all_urls):
 
-
-
-
-
-# print(get_company_names('/Users/keleigong/Dropbox/Python/AUTO_Rating/URLExtraction/concinnity_600/1-50'))
-# company = {}
-# count = {}
-# for row in ws.rows:
-#     tmp = row[0].value.split(' ')[0]
-#     if tmp in company.keys():
-#         if row[1].value in company[tmp]:
-#             count[tmp][company[tmp].index(row[1].value)] += 1
-#         else:
-#             company[tmp].append(row[1].value)
-#             count[tmp].append(1)
-#     else:
-#         company[tmp] = []
-#         count[tmp] = []
-# count.pop('query')
-# company.pop('query')

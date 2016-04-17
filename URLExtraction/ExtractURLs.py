@@ -3,7 +3,7 @@ __author__ = 'keleigong'
 from GoogleScraper import scrape_with_config, GoogleSearchError
 from openpyxl import Workbook
 import csv
-
+import os
 
 def create_query(keywords_file, companies_list):
     file = open(keywords_file, 'r')
@@ -16,14 +16,15 @@ def create_query(keywords_file, companies_list):
     companies_names = companies_names.split('\n')
     query = []
     for company in companies_names:
-        company_splited = company.split(' ')
-        if company_splited[-1] in ["INC", "CORP"]:
-            company = ' '.join(company_splited[0:-1])
+        # company_splited = company.split(' ')
+        # if company_splited[-1] in ["INC", "CORP"]:
+        #     company = ' '.join(company_splited[0:-1])
         for word in keywords:
             query.append(company + ' ' + word)
     return query
 
-def extract_urls(keywords_file, companies_list):
+
+def extract_urls(keywords_file, companies_list, proxy_list=None):
     '''Use GoogleScraper to extract URLs based on the combination of company name
     and keywords, it will store the result in a .csv file and return the path
     and name of the file.
@@ -31,40 +32,36 @@ def extract_urls(keywords_file, companies_list):
     Input: the path of the keywords file and company list. Should be txt file
     or file without format.
 
-    Output: it will automatically create a csv file to store all the query result
+    Output: it will automatically create a json file and a sqlite db file to store all the query result
     and return the path of that file
     '''
+    if proxy_list:
+        proxy_file = proxy_list
+    else:
+        full_path = os.path.realpath(__file__)
+        path, filename = os.path.split(full_path)
+        # print(path, filename)
+        proxy_file = os.path.join(path, "ProxyProvider", "proxy.txt")
 
     query = create_query(keywords_file, companies_list)
     config = {
-        'SCRAPING': {
-            'use_own_ip': False,
-            'keywords': '\n'.join(query),  # 'keywords': '\n'.join(keywords),
-            'check_proxies': False,
-            # 'keyword_file': '/Users/keleigong/Dropbox/Python/AUTO_Rating/URLExtraction/final_keywords',
-            'search_engines': 'google',
-            'num_pages_for_keyword': 1,
-            'scrape_method': 'selenium',
-            'num_workers': 5,
-            # 'output_filename': '/Users/keleigong/Dropbox/Python/AUTO_Rating/output_test.csv'
-        },
-        'SELENIUM': {
-            # 'num_workers': 10,
-            'sel_browser': 'Phantomjs',
-            # 'sel_browser': 'Chrome',
-        },
-        'GLOBAL': {
-            # 'num_workers': 10,
-            # 'google_sleeping_ranges': '5: 10, 20',
-            'verbosity': 2,
-            'manual_captcha_solving': True,
-            'do_caching': 'True',
-            'proxy_file': '/Users/keleigong/Dropbox/Python/AUTO_Rating/URLExtraction/ProxyProvider/proxy.txt',
-        },
-        'OUTPUT': {
-            'database_name': companies_list,
-            'output_filename': companies_list + '.json'
-        },
+        'use_own_ip': True,
+        'keywords': query,
+        'check_proxies': False,
+        'search_engines': 'google',
+        'stop_on_detection': False,
+        # 'google_sleeping_ranges': 5,
+        'num_pages_for_keyword': 1,
+        'scrape_method': 'selenium',  # http or selenium
+        'sel_browser': 'Phantomjs',
+        'num_workers': 2,
+        'verbosity': 2,
+        'do_caching': False,
+        # 'sleeping_ranges': '5: 5, 10',
+        'google_search_url': 'http://www.google.com/search?',
+        # 'proxy_file': proxy_file,
+        'output_filename': companies_list + '.json',
+        'database_name': companies_list,
     }
 
     try:
@@ -73,20 +70,20 @@ def extract_urls(keywords_file, companies_list):
         print(e)
 
     if companies_list.count('.') > 0:
-        return companies_list[:companies_list.index('.')] + ',csv'
+        return companies_list[:companies_list.rindex('.')] + '.json'
     else:
-        return companies_list + '.csv'
+        return companies_list + '.json'
 
-    # let's inspect what we got
+        # let's inspect what we got
 
-    # for serp in search.serps:
-    #     print(serp)
-    #     print(serp.search_engine_name)
-    #     print(serp.scrape_method)
-    #     print(serp.page_number)
-    #     print(serp.requested_at)
-    #     print(serp.num_results)
-    #     ... more attributes ...
+        # for serp in search.serps:
+        #     print(serp)
+        #     print(serp.search_engine_name)
+        #     print(serp.scrape_method)
+        #     print(serp.page_number)
+        #     print(serp.requested_at)
+        #     print(serp.num_results)
+        #     ... more attributes ...
         # for link in serp.links:
         #     print(link)
 
@@ -125,3 +122,11 @@ def convert_to_excel(csvfile, companies_list):
     return csvfile[:-3] + 'xlsx'
 
 # See in the config.cfg file for possible values
+
+if __name__ == "__main__":
+    print(os.getcwd())
+    print(__file__)
+    print(os.path.realpath(__file__))
+    full_path = os.path.realpath(__file__)
+    path, filename = os.path.split(full_path)
+    print(path, filename)
