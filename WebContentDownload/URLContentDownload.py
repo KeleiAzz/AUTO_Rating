@@ -8,16 +8,20 @@ import codecs
 import urllib.request as urllib2
 from threading import Thread,Lock
 from queue import Queue
-import wget
+# import wget
 import os
 import time
+from collections import defaultdict, namedtuple
+from openpyxl import load_workbook
 # from .pdf2text import to_txt
 from WebContentDownload.pdf2text import to_txt, to_text2
 # from pattern.web import URL
 
-BASE_DIR = '/Users/keleigong/Google Drive/SCRC 2015 work/auto-rating/6th/'
-SECONDARY_FILE = "/Users/keleigong/Dropbox/Python/AUTO_Rating/TextExtraction/secondary data/2015 secondary data.docx"
-EXCEL_FILE = "/Users/keleigong/Dropbox/Python/AUTO_Rating/TextExtraction/secondary data/EDGAE_by_year.xlsx"
+BASE_DIR = '/home/scrc/Documents/WebContents/'
+# SECONDARY_FILE = "/Users/keleigong/Dropbox/Python/AUTO_Rating/TextExtraction/secondary data/2015 secondary data.docx"
+# EXCEL_FILE = "/Users/keleigong/Dropbox/Python/AUTO_Rating/TextExtraction/secondary data/EDGAE_by_year.xlsx"
+URL_FILE = "/home/scrc/program/AUTO_Rating/URLExtraction/606/xxx-xxx.xlsx"
+
 
 class Fetcher:
     def __init__(self, threads):
@@ -128,6 +132,24 @@ def generate_urls_from_json(json_file, company_name_file):
 #     company_all_urls = secondary.get_urls(rows)
 #     return company_all_urls
 
+def get_processed_urls(excel_file):
+    res = defaultdict(list)
+    wb = load_workbook(excel_file, read_only=True)
+    ws = wb.get_sheet_by_name("output")
+    flag = 1
+    Link = namedtuple("Link", ["company", "link", "categories"])
+    for row in ws.rows:
+        if flag == 1:
+            names = list(map(lambda x: x.value, row))
+            link_idx = names.index('link')
+            company_idx = names.index('company')
+            category_idx = names.index('categories')
+            flag = 0
+        else:
+            res[row[company_idx].value].append(Link(row[company_idx].value, row[link_idx].value, row[category_idx].value.split(",")))
+    return res
+
+
 def prepare(company_all_urls):
     pass
 
@@ -136,8 +158,9 @@ if __name__ == "__main__":
     #                                             '../URLExtraction/concinnity_600/54-106')
 
     # company_all_urls = secondary.get_urls_from_docx(SECONDARY_FILE)
-    company_all_urls = secondary.get_urls_from_excel(EXCEL_FILE)
 
+    # company_all_urls = secondary.get_urls_from_excel(EXCEL_FILE)
+    company_all_urls = get_processed_urls(URL_FILE)
     urls = []
     company_files = {}
     if not os.path.exists(BASE_DIR):
@@ -149,18 +172,19 @@ if __name__ == "__main__":
     text_dir = BASE_DIR + 'company_profiles/'
     if not os.path.exists(text_dir):
         os.makedirs(text_dir)
-
-    deadlink = codecs.open('deadlink.txt', "a", encoding="utf-8")
+    _, url_file_name = os.path.split(URL_FILE)
+    url_file_name = url_file_name[0:url_file_name.rindex(".")]
+    deadlink = codecs.open(url_file_name + '_deadlink.csv', "a", encoding="utf-8")
     try:
-        with open('processed.txt', 'r') as fp:
+        with open(url_file_name + '_processed.txt', 'r') as fp:
             processed_urls = fp.read()
             if '\n' in processed_urls:
                 processed_urls = processed_urls.split('\n')
-    except Exception as what:
-        print(what)
+    except FileNotFoundError:
+        print(url_file_name + "_processed.txt does not exist, will create a new one")
         processed_urls = []
 
-    processed = codecs.open('processed.txt', "a", encoding="utf-8")
+    processed = codecs.open(url_file_name + 'processed.txt', "a", encoding="utf-8")
 
     for company, results in company_all_urls.items():
         company_files[company] = codecs.open(text_dir + company.replace('/', ' ')+'.txt', "a", encoding="utf-8")

@@ -1,11 +1,12 @@
 __author__ = 'keleigong'
 
 # from openpyxl import load_workbook
-from openpyxl import Workbook
+from openpyxl import Workbook, load_workbook
 import operator
 import json
 import sqlite3
-from collections import defaultdict
+from collections import defaultdict, namedtuple
+
 
 JSON_FILE = ""
 COMPANY_NAME_FILE = ""
@@ -301,6 +302,9 @@ def write_to_xlsx(company_all_urls, filename):
 
     wb2.save(filename)
     return filename
+
+
+
 
 
 if __name__ == "__main__":
