@@ -118,7 +118,7 @@ class SearchQuery(object):
         # self.keyword = ' '.join(query['query'].split(' ')[len(company.split(' ')):])
         self.keyword = query['query'].replace(company, '').strip()
         # print(self.keyword, '---', self.company, query['query'])
-        self.id = query['id']
+        # self.id = query['id']
         self.num_results_for_query = query["num_results_for_query"].replace(",", "")
         self.num_results_for_query = [x for x in self.num_results_for_query.split() if x.isdigit()][0]
         try:
@@ -135,11 +135,11 @@ class SearchResult(object):
     def __init__(self, company, result, keyword, num_results):
         self.company = company
         self.domain = result['domain']
-        self.id = result['id']
+        # self.id = result['id']
         self.link = result['link']
         self.link_type = result['link_type']
         self.rank = result['rank']
-        self.serp_id = result['serp_id']
+        # self.serp_id = result['serp_id']
         self.snippet = result['snippet']
         self.title = result['title']
         self.visible_link = result['visible_link']
@@ -237,7 +237,7 @@ def get_company_query_from_db(company_file, db_file=None):
     c = conn.cursor()
     company_json = defaultdict(dict)
     with open(company_file, 'r') as f:
-        sql = "select l.id as id, title, snippet, link, visible_link, domain, rank, link_type, serp_id, query, " \
+        sql = "select DISTINCT title, snippet, link, visible_link, domain, rank, link_type, query, " \
               "num_results_for_query from link as l, serp as s where l.serp_id=s.id"
         names = f.read().strip().split('\n')
         for row in c.execute(sql):
@@ -252,7 +252,7 @@ def get_company_query_from_db(company_file, db_file=None):
                     else:
                         company_json[name][row['query']] = {'query': row['query'],
                                                             'num_results_for_query': row['num_results_for_query'],
-                                                            'id': row['id'],
+                                                            # 'id': row['id'],
                                                             'results':[tmp]}
                     break
         for name in company_json:
@@ -284,10 +284,12 @@ def remove_irrelevant_urls(company_querys):
 
 def write_to_xlsx(company_all_urls, filename):
     wb2 = Workbook(filename)
-    sheet = wb2.create_sheet(0, 'output')
+    sheet = wb2.create_sheet('output', 0)
     flag = 1
     print(len(company_all_urls.keys()))
     for company, urls in company_all_urls.items():
+        if len(urls) == 0:
+            continue
         if flag == 1:
             sheet.append(list(urls[0].__dict__.keys()))
             flag = 0
