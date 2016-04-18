@@ -1,4 +1,7 @@
 __author__ = 'keleigong'
+'''
+This file is not in use
+'''
 from io import StringIO
 from pdfminer.pdfinterp import PDFResourceManager, process_pdf
 from pdfminer.converter import TextConverter

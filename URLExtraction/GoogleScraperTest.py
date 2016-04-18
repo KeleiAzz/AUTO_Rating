@@ -1,4 +1,7 @@
 __author__ = 'keleigong'
+'''
+This file is not in use
+'''
 # -*- coding: utf-8 -*-
 """
 Shows how to control GoogleScraper programmatically.

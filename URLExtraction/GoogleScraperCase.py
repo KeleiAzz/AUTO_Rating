@@ -1,4 +1,7 @@
 __author__ = 'keleigong'
+'''
+This file is not in use
+'''
 import GoogleScraper
 import urllib
 

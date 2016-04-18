@@ -10,7 +10,8 @@ import os
 # import time
 from collections import defaultdict, namedtuple
 from openpyxl import load_workbook
-from .MultipleThreadFetcher import Fetcher
+from WebContentDownload.MultipleThreadFetcher import Fetcher
+
 # from .pdf2text import to_txt
 
 # from pattern.web import URL
@@ -21,12 +22,12 @@ BASE_DIR = '/home/scrc/Documents/WebContents/'
 URL_FILE = "/home/scrc/program/AUTO_Rating/URLExtraction/606/xxx-xxx.xlsx"
 
 
-
 def generate_urls_from_json(json_file, company_name_file):
     company_json = URL.get_company_query_from_json(json_file, company_name_file)
     company_querys = URL.query_processing(company_json)
     company_all_urls = URL.remove_irrelevant_urls(company_querys)
     return company_all_urls
+
 
 # def generate_urls_from_secondary(doc_file):
 #     rows = secondary.generate_rows(doc_file)
@@ -47,12 +48,14 @@ def get_processed_urls(excel_file):
             category_idx = names.index('categories')
             flag = 0
         else:
-            res[row[company_idx].value].append(Link(row[company_idx].value, row[link_idx].value, row[category_idx].value.split(",")))
+            res[row[company_idx].value].append(
+                Link(row[company_idx].value, row[link_idx].value, row[category_idx].value.split(",")))
     return res
 
 
 def prepare(company_all_urls):
     pass
+
 
 if __name__ == "__main__":
     # company_all_urls = generate_urls_from_json('../URLExtraction/concinnity_600/54-106.json',
@@ -88,14 +91,14 @@ if __name__ == "__main__":
     processed = codecs.open(url_file_name + 'processed.txt', "a", encoding="utf-8")
 
     for company, results in company_all_urls.items():
-        company_files[company] = codecs.open(text_dir + company.replace('/', ' ')+'.txt', "a", encoding="utf-8")
+        company_files[company] = codecs.open(text_dir + company.replace('/', ' ') + '.txt', "a", encoding="utf-8")
         for result in results:
             if result.link not in processed_urls:
                 urls.append((company, result.link, ','.join(result.categories)))
             else:
                 print("This link has been processed " + result.link)
 
-    f = Fetcher(threads=15)
+    f = Fetcher(threads=15, base_dir=BASE_DIR)
     h = html2text.HTML2Text()
     for url in urls:
         f.push(url)
@@ -104,8 +107,8 @@ if __name__ == "__main__":
         print(url[0], url[1].get_full_url(), len(content))
         if content != 'deadlink':
             company_files[url[0]].write('\n\n======================================================\n')
-            company_files[url[0]].write(url[1].get_full_url()+'\n')
-            company_files[url[0]].write(url[2]+'\n')
+            company_files[url[0]].write(url[1].get_full_url() + '\n')
+            company_files[url[0]].write(url[2] + '\n')
             company_files[url[0]].write(content)
             processed.write(url[1].get_full_url() + '\n')
         else:
