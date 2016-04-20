@@ -6,6 +6,12 @@ import csv
 import os
 
 def create_query(keywords_file, companies_list):
+    '''
+    combine company names and keywords to create search query.
+    :param keywords_file: a file contains keywords, one keyword per line
+    :param companies_list: contains company names, one company per line
+    :return:
+    '''
     file = open(keywords_file, 'r')
     keywords = file.read()
     file.close()
@@ -25,7 +31,8 @@ def create_query(keywords_file, companies_list):
 
 
 def extract_urls(keywords_file, companies_list, proxy_list=None):
-    '''Use GoogleScraper to extract URLs based on the combination of company name
+    '''
+    Use GoogleScraper to extract URLs based on the combination of company name
     and keywords, it will store the result in a .csv file and return the path
     and name of the file.
 
@@ -89,7 +96,9 @@ def extract_urls(keywords_file, companies_list, proxy_list=None):
 
 
 def convert_to_excel(csvfile, companies_list):
-    '''Convert the csv file created by extract_urls to excel file,
+    '''
+    This function is not in use
+    Convert the csv file created by extract_urls to excel file,
     and add the company's name to each row.
     :param path of csvfile:
     :param path of companies_list:
