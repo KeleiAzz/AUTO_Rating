@@ -129,32 +129,56 @@ def generate_rows(doc_file):
     #     print('----------')
 
 # f.close()
-def output_to_excel(rows, output_file, company_id):
+def output_to_excel(rows, output_file, company_id=None, year=2015):
+    '''
+    :param rows: corresponding rows to be put into the excel file
+    :param output_file: output file name
+    :param company_id: mapping from company name to company id
+    :param year: which the secondary data belong to
+    :return:
+    '''
     wb = Workbook()
     sheet = wb.create_sheet('output', 0)
     # sheet.append(['link', 'frequency', 'company', 'rank', 'year', 'query',
     #                   'link_type', 'title', 'domain', 'snippet', 'year'])
-    no_match = set()
-    matched = set()
-    sheet.append(['company_id', 'company_name', 'section', 'category', 'link', 'description', 'date'])
-    for row in rows:
-        data = row.to_list()
-        company_name = data[0].upper()
-        if company_name in company_id:
-            data.insert(0, company_id[company_name])
-            data.append("12/31/2013")
+    date = "12/31/{}".format(year)
+    if company_id:
+        no_match = set()
+        matched = set()
+        sheet.append(['company_id', 'company_name', 'section', 'category', 'link', 'description', 'date'])
+        for row in rows:
+            data = row.to_list()
+            company_name = data[0].upper()
+            # if company_id:
+            if company_name in company_id:
+                data.insert(0, company_id[company_name])
+                data.append(date)
+                sheet.append(data)
+                matched.add(company_name)
+            else:
+                no_match.add(company_name)
+                # else:
+
+                # print("Company name no match", data[0])
+        for name in no_match:
+            print(name)
+        print(len(no_match), len(matched))
+    else:
+        sheet.append(['company_name', 'section', 'category', 'link', 'description', 'date'])
+        for row in rows:
+            data = row.to_list()
+            data.append(date)
             sheet.append(data)
-            matched.add(company_name)
-        else:
-            no_match.add(company_name)
-            # print("Company name no match", data[0])
-    for name in no_match:
-        print(name)
-    print(len(no_match), len(matched))
     wb.save(output_file)
     print('done')
 
+
 def get_urls_from_docx(filepath):
+    '''
+    Extract all urls from the secondary data docx file.
+    :param filepath:
+    :return:
+    '''
     rows = generate_rows(filepath)
     res = {}
     for row in rows:
@@ -183,7 +207,14 @@ def get_urls_from_excel(filepath):
                 res[row[0].value].append(LinkCategory(row[0].value, row[5].value, "ALL"))
     return res
 
+
 def get_company_id(filepath):
+    '''
+    create a map between company name to company id, the required data is exported from scrc server's database, table
+    "query_company".
+    :param filepath:
+    :return:
+    '''
     with open(filepath, 'r') as f:
         companies = f.read().strip().split('\n')
         companies = [x.split(',') for x in companies]
@@ -191,22 +222,25 @@ def get_company_id(filepath):
         return res
 
 
+def docx_to_excel(doc_file, output_file, company_id_file=None, year=2015):
+    '''
+    convert the docx secondary data file to an excel format.
+    :param doc_file:
+    :param output_file:
+    :param company_id_file:
+    :param year:
+    :return:
+    '''
+    rows = generate_rows(doc_file)
+    if company_id_file:
+        company_id = get_company_id(company_id_file)
+        output_to_excel(rows, output_file, company_id, year)
+    else:
+        output_to_excel(rows, output_file, company_id=None, year=year)
+
 if __name__ == "__main__":
     doc_file = "/Users/keleigong/Dropbox/Python/AUTO_Rating/TextExtraction/secondary data/2013 Secondary Data_ORGANIZED.docx"
     output_file = 'secondary data/2013_secondary_data.xlsx'
-    rows = generate_rows(doc_file)
-    company_id = get_company_id("query_company.csv")
-    output_to_excel(rows, output_file, company_id)
-    # company_all_urls = get_urls_from_docx(doc_file)
-    # for key, value in company_all_urls.items():
-    #     print("{0} has\t {1} unique URLs".format(key, len(value)))
-
-
-
-# document = dx.opendocx('/Users/keleigong/Dropbox/Python/AUTO_Rating/TextExtraction/(final)2014 SCRC Secondary Data without split.docx')
-
-# print(dx.getdocumenttext(document))
-
-# for p in dx.getdocumenttext(document):
-    # print(p)
+    company_id_file = "query_company.csv"
+    docx_to_excel(doc_file, output_file, company_id_file, 2013)
 
