@@ -1,7 +1,6 @@
 __author__ = 'keleigong'
 from docx import Document
 from openpyxl import Workbook
-
 from docx.text.paragraph import Paragraph
 
 from openpyxl import Workbook, load_workbook
@@ -91,7 +90,7 @@ def generate_rows(doc_file):
                 previous_p = p
                 current_company = p.text.replace('\n', '').strip()
                 # print('=========================',file=f)
-                print(current_company)
+                # print(current_company)
             else:
                 if is_section(p):
                     current_section = p.text
@@ -130,13 +129,28 @@ def generate_rows(doc_file):
     #     print('----------')
 
 # f.close()
-def output_to_excel(rows, output_file):
+def output_to_excel(rows, output_file, company_id):
     wb = Workbook()
-    sheet = wb.create_sheet(0, 'output')
+    sheet = wb.create_sheet('output', 0)
     # sheet.append(['link', 'frequency', 'company', 'rank', 'year', 'query',
     #                   'link_type', 'title', 'domain', 'snippet', 'year'])
+    no_match = set()
+    matched = set()
+    sheet.append(['company_id', 'company_name', 'section', 'category', 'link', 'description', 'date'])
     for row in rows:
-        sheet.append(row.to_list())
+        data = row.to_list()
+        company_name = data[0].upper()
+        if company_name in company_id:
+            data.insert(0, company_id[company_name])
+            data.append("12/31/2013")
+            sheet.append(data)
+            matched.add(company_name)
+        else:
+            no_match.add(company_name)
+            # print("Company name no match", data[0])
+    for name in no_match:
+        print(name)
+    print(len(no_match), len(matched))
     wb.save(output_file)
     print('done')
 
@@ -160,7 +174,7 @@ def get_urls_from_docx(filepath):
 def get_urls_from_excel(filepath):
     res = {}
     wb = load_workbook(filepath, read_only=True)
-    ws = wb.get_sheet_by_name("2015")
+    ws = wb.get_sheet_by_name("Sheet2")
     for row in ws.rows:
         if 'http' in row[5].value:
             if row[0].value not in res.keys():
@@ -169,14 +183,23 @@ def get_urls_from_excel(filepath):
                 res[row[0].value].append(LinkCategory(row[0].value, row[5].value, "ALL"))
     return res
 
+def get_company_id(filepath):
+    with open(filepath, 'r') as f:
+        companies = f.read().strip().split('\n')
+        companies = [x.split(',') for x in companies]
+        res = {x[1].upper(): x[0] for x in companies}
+        return res
+
+
 if __name__ == "__main__":
-    doc_file = "/Users/keleigong/Dropbox/Python/AUTO_Rating/TextExtraction/secondary data/(final)2014 SCRC Secondary Data without split.docx"
-    output_file = '2014_secondary_data.xlsx'
+    doc_file = "/Users/keleigong/Dropbox/Python/AUTO_Rating/TextExtraction/secondary data/2013 Secondary Data_ORGANIZED.docx"
+    output_file = 'secondary data/2013_secondary_data.xlsx'
     rows = generate_rows(doc_file)
-    # output_to_excel(rows, output_file)
-    company_all_urls = get_urls(rows)
-    for key, value in company_all_urls.items():
-        print("{0} has\t {1} unique URLs".format(key, len(value)))
+    company_id = get_company_id("query_company.csv")
+    output_to_excel(rows, output_file, company_id)
+    # company_all_urls = get_urls_from_docx(doc_file)
+    # for key, value in company_all_urls.items():
+    #     print("{0} has\t {1} unique URLs".format(key, len(value)))
 
 
 
