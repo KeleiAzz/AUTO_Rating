@@ -6,7 +6,7 @@ import boto3
 ec2 = boto3.resource('ec2')
 client = boto3.client('ec2')
 
-def createInstances(num, key='mac', security_group='default'):
+def createInstances(num, key='scrc_server', security_group='proxy'):
     instances = ec2.create_instances(
         ImageId='ami-d05e75b8',
         MinCount=num,
@@ -17,6 +17,7 @@ def createInstances(num, key='mac', security_group='default'):
     )
     ids = [ins.id for ins in instances]
     print("Instances created, IDs: ", ids)
+    time.sleep(3)
     ips = []
     for id in ids:
         ips.append(ec2.Instance(id).public_ip_address)
@@ -38,7 +39,7 @@ def createKeyPairs(name, public_key_file):
     f.close()
     key_pair = ec2.import_key_pair(
         KeyName=name,
-        PublicKayMaterial=key
+        PublicKeyMaterial=key
     )
     return key_pair
 
@@ -52,6 +53,19 @@ def createSecurityGroup(name, description):
         CidrIp='0.0.0.0/0'
     )
 
+def updateSecurityGroup():
+    sg = ec2.SecurityGroup('sg-e888718e')
+    local_IP = getLocalIP()
+    try:
+        sg.authorize_ingress(
+            IpProtocol='-1',
+            CidrIp=local_IP + '/32'
+        )
+        print('Authorize inbound IP success')
+    except:
+        pass
+        # print('Already exists')
+
 
 def createInventory(instances, key_file):
     key_file_path = os.path.abspath(key_file)
@@ -60,7 +74,7 @@ def createInventory(instances, key_file):
     ips = []
     for id in ids:
         ips.append(ec2.Instance(id).public_ip_address)
-    f = open('inventory', 'ab')
+    f = open('inventory', 'w')
     print("Writing to inventory")
     for i in range(len(ips)):
         s = '%s ansible_ssh_host=%s ansible_ssh_user=%s ansible_ssh_private_key_file=%s' % (ids[i], ips[i], 'ubuntu', key_file_path,)
@@ -121,6 +135,7 @@ def startAllInstances(key_file):
     except:
         print('Already exists')
 
+
 def stopAllInstances():
     ec2.instances.filter(
         Filters=[{'Name': 'instance-state-name', 'Values': ['running']}]
@@ -132,8 +147,17 @@ def terminateAllInstances():
     ).terminate()
 
 def getLocalIP():
-    import urllib2
+    try:
+        import urllib2
+    except:
+        import urllib.request as urllib2
     import json
+    import codecs
+    reader = codecs.getreader('utf-8')
     response = urllib2.urlopen('http://ipinfo.io/json')
-    data = json.load(response)
+    data = json.load(reader(response))
     return str(data['ip'])
+
+if __name__ == "__main__":
+    # createKeyPairs("scrc_server", "public.key")
+    createSecurityGroup("proxy", "proxy server")
