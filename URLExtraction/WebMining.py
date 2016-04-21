@@ -19,9 +19,9 @@ if __name__ == "__main__":
     company_name_file = 'xxx-xxx'
     keywords_file_path = os.path.join(base_path, keywords_file)
     company_name_file_path = os.path.join(base_path, company_name_file)
-
+    # proxy_file = "/home/scrc/program/AUTO_Rating/URLExtraction/ProxyProvider/proxy.txt"
     # Collecting URLs using Google search, it will generate a json file and a db file to store the results.
-    # result_file = web_mining(company_name_file_path, keywords_file_path)
+    result_file = ExtractURLs.extract_urls(keywords_file_path, company_name_file_path)
 
     print("#################################################")
     print("#                                               #")
