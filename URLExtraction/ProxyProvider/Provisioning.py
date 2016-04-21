@@ -1,7 +1,7 @@
 import sys
 import getopt
-import AWS as aws
-import digitalocean as DO
+import URLExtraction.ProxyProvider.AWS as aws
+import URLExtraction.ProxyProvider.digitalocean as DO
 import os
 import time
 
@@ -41,6 +41,7 @@ def main():
                     print("Wait for servers initialization")
                     time.sleep(5)
                 print("All servers ready")
+                aws.updateSecurityGroup()
                 aws.createInventory(instances, 'private.key')
             if provider.lower() in ('do', 'digitalocean'):
                 token = os.environ["DO_TOKEN"]

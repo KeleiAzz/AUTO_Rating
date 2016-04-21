@@ -52,7 +52,7 @@ def extract_urls(keywords_file, companies_list, proxy_list=None):
 
     query = create_query(keywords_file, companies_list)
     config = {
-        'use_own_ip': True,
+        'use_own_ip': False,
         'keywords': query,
         'check_proxies': False,
         'search_engines': 'google',
@@ -61,12 +61,12 @@ def extract_urls(keywords_file, companies_list, proxy_list=None):
         'num_pages_for_keyword': 1,
         'scrape_method': 'selenium',  # http or selenium
         'sel_browser': 'Phantomjs',
-        'num_workers': 2,
+        'num_workers': 1,
         'verbosity': 2,
         'do_caching': False,
         # 'sleeping_ranges': '5: 5, 10',
         'google_search_url': 'http://www.google.com/search?',
-        # 'proxy_file': proxy_file,
+        'proxy_file': proxy_file,
         'output_filename': companies_list + '.json',
         'database_name': companies_list,
     }
