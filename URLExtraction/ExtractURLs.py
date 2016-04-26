@@ -66,6 +66,9 @@ def extract_urls(keywords_file, companies_list, proxy_list=None):
         proxy_file = os.path.join(path, "ProxyProvider", "proxy.txt")
 
     query = create_query(keywords_file, companies_list)
+    if len(query) == 0:
+        print("All queries been scraped")
+        return companies_list + '.json'
     config = {
         'use_own_ip': False,
         'keywords': query,
