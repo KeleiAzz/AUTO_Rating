@@ -4,6 +4,7 @@ from GoogleScraper import scrape_with_config, GoogleSearchError
 from openpyxl import Workbook
 import csv
 import os
+import sqlite3
 
 def create_query(keywords_file, companies_list):
     '''
@@ -12,6 +13,17 @@ def create_query(keywords_file, companies_list):
     :param companies_list: contains company names, one company per line
     :return:
     '''
+    db_file = companies_list + '.db'
+    if os.path.exists(db_file):
+        conn = sqlite3.connect(db_file)
+        # conn.row_factory = dict_factory
+        c = conn.cursor()
+        sql = "SELECT DISTINCT query from serp WHERE status='successful'"
+        scraped = list(c.execute(sql))
+        scraped = [x[0] for x in scraped]
+        scraped = set(scraped)
+    else:
+        scraped = None
     file = open(keywords_file, 'r')
     keywords = file.read()
     file.close()
@@ -27,6 +39,9 @@ def create_query(keywords_file, companies_list):
         #     company = ' '.join(company_splited[0:-1])
         for word in keywords:
             query.append(company + ' ' + word)
+    if scraped:
+        query = [q for q in query if q not in scraped]
+    print("{} keywords to scrape".format(len(query)))
     return query
 
 
@@ -109,7 +124,7 @@ def convert_to_excel(csvfile, companies_list):
     companies_list = companies_list.split('\n')
     file.close()
     wb = Workbook(write_only=True)
-    ws = wb.create_sheet(0, 'raw_data')
+    ws = wb.create_sheet('raw_data', 0)
     row_num = 0
     company_name = 'xxxxx'
     with open(csvfile, 'rt') as f:
