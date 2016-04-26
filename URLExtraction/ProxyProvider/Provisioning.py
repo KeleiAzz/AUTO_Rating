@@ -48,8 +48,8 @@ def main():
                     time.sleep(5)
                 print("All servers ready")
                 aws.updateSecurityGroup()
-                update_proxy()
                 aws.createInventory(instances, 'private.key')
+                update_proxy()
             if provider.lower() in ('do', 'digitalocean'):
                 token = os.environ["DO_TOKEN"]
                 conn = DO.Digitalocean(token)
