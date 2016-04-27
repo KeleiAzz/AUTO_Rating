@@ -16,10 +16,10 @@ from WebContentDownload.MultipleThreadFetcher import Fetcher
 
 # from pattern.web import URL
 
-BASE_DIR = '/home/scrc/Documents/WebContents/'
+BASE_DIR = "/Users/keleigong/Dropbox/Python/AUTO_Rating/URLExtraction/606/filtered/content"
 # SECONDARY_FILE = "/Users/keleigong/Dropbox/Python/AUTO_Rating/TextExtraction/secondary data/2015 secondary data.docx"
 # EXCEL_FILE = "/Users/keleigong/Dropbox/Python/AUTO_Rating/TextExtraction/secondary data/EDGAE_by_year.xlsx"
-URL_FILE = "/home/scrc/program/AUTO_Rating/URLExtraction/606/xxx-xxx.xlsx"
+URL_FILE = "/Users/keleigong/Dropbox/Python/AUTO_Rating/URLExtraction/606/filtered/1-30.xlsx"
 
 
 def generate_urls_from_json(json_file, company_name_file):
@@ -70,15 +70,15 @@ if __name__ == "__main__":
     if not os.path.exists(BASE_DIR):
         os.makedirs(BASE_DIR)
 
-    pdf_dir = BASE_DIR + 'company_pdf/'
+    pdf_dir = os.path.join(BASE_DIR, 'company_pdf')
     if not os.path.exists(pdf_dir):
-        os.makedirs(BASE_DIR + 'company_pdf/')
-    text_dir = BASE_DIR + 'company_profiles/'
+        os.makedirs(pdf_dir)
+    text_dir = os.path.join(BASE_DIR, 'company_profiles')
     if not os.path.exists(text_dir):
         os.makedirs(text_dir)
     _, url_file_name = os.path.split(URL_FILE)
     url_file_name = url_file_name[0:url_file_name.rindex(".")]
-    deadlink = codecs.open(url_file_name + '_deadlink.csv', "a", encoding="utf-8")
+    deadlink = codecs.open(os.path.join(BASE_DIR, url_file_name + '_deadlink.csv'), "a", encoding="utf-8")
     try:
         with open(url_file_name + '_processed.txt', 'r') as fp:
             processed_urls = fp.read()
@@ -88,17 +88,17 @@ if __name__ == "__main__":
         print(url_file_name + "_processed.txt does not exist, will create a new one")
         processed_urls = []
 
-    processed = codecs.open(url_file_name + 'processed.txt', "a", encoding="utf-8")
+    processed = codecs.open(os.path.join(BASE_DIR, url_file_name + '_processed.txt'), "a", encoding="utf-8")
 
     for company, results in company_all_urls.items():
-        company_files[company] = codecs.open(text_dir + company.replace('/', ' ') + '.txt', "a", encoding="utf-8")
+        company_files[company] = codecs.open(os.path.join(text_dir, company.replace('/', ' ') + '.txt'), "a", encoding="utf-8")
         for result in results:
             if result.link not in processed_urls:
                 urls.append((company, result.link, ','.join(result.categories)))
             else:
                 print("This link has been processed " + result.link)
 
-    f = Fetcher(threads=15, base_dir=BASE_DIR)
+    f = Fetcher(threads=10, base_dir=BASE_DIR)
     h = html2text.HTML2Text()
     for url in urls:
         f.push(url)
@@ -116,6 +116,5 @@ if __name__ == "__main__":
             deadlink.write(url[0] + ', ' + url[1].get_full_url() + ',\n')
     for company, file in company_files.items():
         file.close()
-
     deadlink.close()
     processed.close()

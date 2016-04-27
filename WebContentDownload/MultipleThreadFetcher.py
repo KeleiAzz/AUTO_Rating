@@ -55,7 +55,8 @@ class Fetcher:
             req = self.q_req.get()
             with self.lock:
                 self.running += 1
-            pdf_dir = self.path + 'company_pdf/' + req[0].replace('/', ' ') + '/'
+            pdf_dir = os.path.join(self.path, "company_pdf", req[0].replace('/', ' '))
+            # pdf_dir = self.path + 'company_pdf/' + req[0].replace('/', ' ') + '/'
             if not os.path.exists(pdf_dir):
                 try:
                     os.makedirs(pdf_dir)
@@ -65,7 +66,7 @@ class Fetcher:
                 ans = self.opener.open(req[1], timeout=15)
                 if 'pdf' in ans.getheader('Content-Type') or '.pdf' in req[0]:
                     filename = req[0].replace('/', ' ') + str(self.pdfcounter) + '.pdf'
-                    file = open(pdf_dir + filename, 'wb')
+                    file = open(os.path.join(pdf_dir, filename), 'wb')
                     with self.lock:
                         self.pdfcounter += 1
                     file.write(ans.read())
