@@ -14,6 +14,7 @@ from re import match
 import json
 from collections import OrderedDict
 import random
+import os
 
 
 def create_opener(ip, port):
@@ -158,7 +159,7 @@ def parse_google(html, query, page=1):
         query_result.results.append(res)
         j += 1
 
-    print('----------------')
+    # print('----------------')
     return query_result
 
 
@@ -292,6 +293,7 @@ class Scraper(object):
         count = 0
         sleep_total = 1
         while True:
+            print("-----------------------------------")
             query, page, per_page = self.q_query.get()
             with self.lock:
                 self.running += 1
@@ -310,26 +312,30 @@ class Scraper(object):
             self.q_query.task_done()
             if error == 3:
                 with self.lock:
-                    self.working_thread -= 1
+                    # self.working_thread -= 1
                     self.openers[opener_idx] = False
                 break
             count += 1
-            if count % 40 == 0:
-                sleep_time = random.randint(20, 30)
+            if count % 50 == 0:
+                sleep_time = random.randint(60, 100)
+            elif count % 40 == 0:
+                sleep_time = random.randint(30, 50)
             elif count % 30 == 0:
-                sleep_time = random.randint(15, 20)
+                sleep_time = random.randint(20, 25)
             elif count % 20 == 0:
-                sleep_time = random.randint(11, 16)
+                sleep_time = random.randint(15, 22)
             elif count % 10 == 0:
-                sleep_time = random.randint(9, 12)
+                sleep_time = random.randint(11, 17)
             elif count % 5 == 0:
-                sleep_time = random.randint(7, 10)
+                sleep_time = random.randint(9, 14)
             else:
-                sleep_time = random.randint(5, 8)
+                sleep_time = random.randint(7, 12)
             print("Proxy #{}, scraping keyword: {}, {} keywords completed,"
-                  " sleep for {} seconds".format(opener_idx, query, count, sleep_time))
+                  " sleep for {} seconds".format(opener_idx+1, query, count, sleep_time))
             time.sleep(sleep_time+random.random())
-        print("Thread %s terminated due to proxy not working properly.")
+        print("Thread %s terminated due to proxy not working properly." % (opener_idx+1,))
+        with self.lock:
+            self.working_thread -= 1
         if self.working_thread == 0:
             print("All threads terminated, please use new proxy and rerun")
 
@@ -363,8 +369,9 @@ def create_query(keywords_file, companies_list):
         #     company = ' '.join(company_splited[0:-1])
         for word in keywords:
             query.append(company + ' ' + word)
-    print("Create query done, there are {} queries need to be scraped in total".format(len(query)))
+    # print("Create query done, there are {} queries need to be scraped in total".format(len(query)))
     return query
+
 
 def test():
     query = 'python regex tester'
@@ -392,18 +399,39 @@ def test():
 
 if __name__ == "__main__":
     # test()
-    # proxy = [("52.23.176.220", 10080), ("52.87.214.59", 10080)]
+    base_path = "606"
+    keywords_file = 'keywords.txt'
+    company_name_file = 'xxx-xxx'
+    keywords_file_path = os.path.join(base_path, keywords_file)
+    company_name_file_path = os.path.join(base_path, company_name_file)
+
     proxy = read_proxy_list("ProxyProvider/proxy.txt")
     s = Scraper(proxy)
-    # queries = ['nike', 'apple', 'facebook', 'google', 'ibm']
-    queries = create_query("606/keywords.txt", "606/xxx-xxx")
+    queries = create_query(keywords_file_path, company_name_file_path)
+    if os.path.exists(company_name_file_path+'.json'):
+        with open(company_name_file_path+'.json', 'r') as f:
+            scraped = set()
+            for line in f:
+                json_obj = json.loads(line.strip())
+                scraped.add(json_obj['query'])
+    else:
+        scraped = None
+    print("{} queries in total".format(len(queries)))
+    if scraped:
+        queries = [q for q in queries if q not in scraped]
+        print("{} queries remaining".format(len(queries)))
+    random.shuffle(queries)
     for q in queries:
         s.push(q)
-    result_file = open("xxx-xxx_new.json", 'a')
+    result_file = open(company_name_file_path+'.json', 'a')
     # scraped_query = open("xxx-xxx_scraped", 'w')
     while s.taskleft():
         query, page, result = s.pop()
         result_file.write(json.dumps(result.to_dict()))
         result_file.write('\n')
+        if s.working_thread == 0:
+            time.sleep(3)
+            result_file.close()
+            exit(1)
     result_file.close()
     print("***********END***********")
