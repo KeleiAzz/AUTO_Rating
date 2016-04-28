@@ -120,7 +120,10 @@ class SearchQuery(object):
         self.keyword = query['query'].replace(company, '').strip()
         # print(self.keyword, '---', self.company, query['query'])
         # self.id = query['id']
-        self.num_results_for_query = query["num_results_for_query"].replace(",", "")
+        if "num_results_for_query" in query:
+            self.num_results_for_query = query["num_results_for_query"].replace(",", "")
+        else:
+            self.num_results_for_query = query["num_of_results"].replace(",", "")
         self.num_results_for_query = [x for x in self.num_results_for_query.split() if x.isdigit()][0]
         try:
             self.num_results_for_query = int(self.num_results_for_query)
@@ -129,7 +132,9 @@ class SearchQuery(object):
         self.filter = ['erp', 'ariba', 'oracle', 'sap', 'sage', 'edi', 'supplier', 'vendor', 'supply']
         self.results = []
         for result in query['results']:
-            if result['link_type'] == 'results' and result['link'][0:4] == 'http':
+            if 'link_type' in result and result['link_type'] == 'results' and result['link'] and len(result['link']) > 5:
+                self.results.append(SearchResult(company, result, self.keyword, self.num_results_for_query))
+            else:
                 self.results.append(SearchResult(company, result, self.keyword, self.num_results_for_query))
 
 class SearchResult(object):
@@ -139,11 +144,17 @@ class SearchResult(object):
         # self.id = result['id']
         self.link = result['link']
         self.link_type = result['link_type']
-        self.rank = result['rank']
+        if 'rank' in result:
+            self.rank = result['rank']
+        else:
+            self.rank = result['ranking']
         # self.serp_id = result['serp_id']
         self.snippet = result['snippet']
-        self.title = result['title']
-        self.visible_link = result['visible_link']
+        if 'title' in result:
+            self.title = result['title']
+        else:
+            self.title = result['name']
+        # self.visible_link = result['visible_link']
         self.count = 1
         self.keywords = [keyword]
         self.categories = []
@@ -238,7 +249,7 @@ def get_company_query_from_db(company_file, db_file=None):
     c = conn.cursor()
     company_json = defaultdict(dict)
     with open(company_file, 'r') as f:
-        sql = "select DISTINCT title, snippet, link, visible_link, domain, rank, link_type, query, " \
+        sql = "select DISTINCT title, snippet, link, domain, rank, link_type, query, " \
               "num_results_for_query from link as l, serp as s where l.serp_id=s.id"
         names = f.read().strip().split('\n')
         for row in c.execute(sql):

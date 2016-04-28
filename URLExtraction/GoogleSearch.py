@@ -57,19 +57,19 @@ def get_search_url(query, page=1, per_page=10, lang='en'):
 
 
 class QueryResult(object):
-    def __init__(self, query, num_of_results, page_number=1):
+    def __init__(self, query, num_results_for_query, page_number=1):
         self.query = query
-        self.num_of_results = num_of_results
+        self.num_results_for_query = num_results_for_query
         self.page_number = 1
         self.results = []
 
     def __repr__(self):
         results_str = [r.__repr__() for r in self.results]
-        res = "Search query: {}, {}\n".format(self.query, self.num_of_results)
+        res = "Search query: {}, {}\n".format(self.query, self.num_results_for_query)
         return res + '\n'.join(results_str)
 
     def to_dict(self):
-        d = OrderedDict({"query": self.query, 'num_of_results': self.num_of_results,
+        d = OrderedDict({"query": self.query, 'num_results_for_query': self.num_results_for_query,
                          "page_number": self.page_number})
         d['results'] = [r.__dict__ for r in self.results]
         return d
@@ -79,7 +79,7 @@ class QueryResult(object):
         for r in self.results:
             row = r.__dict__.values()
             row.insert(0, self.query)
-            row.insert(0, self.num_of_results)
+            row.insert(0, self.num_results_for_query)
             row.insert(0, self.page_number)
             res.append(row)
         return res
@@ -88,7 +88,7 @@ class GoogleResult:
     """Represents a google search result."""
 
     def __init__(self):
-        self.name = None  # The title of the link
+        self.title = None  # The title of the link
         self.link = None  # The external link
         self.domain = None
         # self.google_link = None  # The google link
@@ -96,14 +96,14 @@ class GoogleResult:
         self.snippet = None  # The description of the link
         # self.cached = None  # Cached version link of page
         # self.page_num = None  # Results page this one was on
-        self.ranking = None  # What index on this page it was on
+        self.rank = None  # What index on this page it was on
 
     def __repr__(self):
-        name = self.limit_str_size(self.name, 55)
+        title = self.limit_str_size(self.title, 55)
         snippet = self.limit_str_size(self.snippet, 49)
         link = self.limit_str_size(self.link, 55)
         list_google = ["GoogleResult(",
-                       "name={}".format(name), "\n", " " * 13,
+                       "title={}".format(title), "\n", " " * 13,
                        "snippet={}".format(snippet), "\n", " " * 13,
                        "link={}".format(link)]
         # return str(self.__dict__)
@@ -134,19 +134,19 @@ def parse_google(html, query, page=1):
     soup = BeautifulSoup(html, 'html.parser')
     resultStats = soup.find("div", attrs={"id": "resultStats"})
     if resultStats:
-        num_of_results = resultStats.text
+        num_results_for_query = resultStats.text
     else:
-        num_of_results = "NA"
+        num_results_for_query = "NA"
     divs = soup.findAll("div", attrs={"class": "g"})
 
     j = 1
-    query_result = QueryResult(query, num_of_results, page_number=page)
+    query_result = QueryResult(query, num_results_for_query, page_number=page)
     for li in divs:
         # print(li.find('a').text)
         res = GoogleResult()
         # res.page = i
-        res.ranking = j
-        res.name = _get_name(li)
+        res.rank = j
+        res.title = _get_title(li)
         res.link = _get_link(li)
         res.domain = _get_domain(res.link)
         # res.google_link = _get_google_link(li)
@@ -156,6 +156,7 @@ def parse_google(html, query, page=1):
         # if void is True:
         #     if res.description is None:
         #         continue
+        # if res.link and res.link.startswith('http'):
         query_result.results.append(res)
         j += 1
 
@@ -163,7 +164,7 @@ def parse_google(html, query, page=1):
     return query_result
 
 
-def _get_name(li):
+def _get_title(li):
     """Return the name of a google search."""
     a = li.find("a")
     # return a.text.encode("utf-8").strip()
@@ -185,7 +186,7 @@ def _get_link(li):
         if m and len(m.groups()) == 2:
             return urllib2.unquote(m.group(2))
 
-    return None
+    return link
 
 
 def _get_domain(link):
@@ -249,6 +250,9 @@ class ExtractWorker(Thread):
 
 
 class Scraper(object):
+    '''
+    Scraping by using urllib, sending request. This way is easier to be blocked.
+    '''
     def __init__(self, proxy_list=None, page=1, per_page=10):
         self.openers = []
         if proxy_list:
@@ -375,7 +379,6 @@ def create_query(keywords_file, companies_list):
 
 def test():
     query = 'python regex tester'
-    # url = 'https://www.google.com/search?q=boto3'
     url = get_search_url(query, page=1)
     header = "Mozilla/5.001 (windows; U; NT4.0; en-US; rv:1.0) Gecko/25250101"
     request = urllib2.Request(url)

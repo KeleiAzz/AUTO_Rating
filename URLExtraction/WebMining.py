@@ -14,7 +14,7 @@ def web_mining(company_name_file, keywords_file):
 
 if __name__ == "__main__":
     # Setting the base working path, and required file names
-    base_path = "/home/scrc/program/AUTO_Rating/URLExtraction/606"
+    base_path = "606"
     keywords_file = 'keywords.txt'
     company_name_file = 'xxx-xxx'
     keywords_file_path = os.path.join(base_path, keywords_file)
