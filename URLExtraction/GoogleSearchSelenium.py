@@ -136,19 +136,19 @@ class ScraperSelenium(object):
                 break
             count += 1
             if count % 50 == 0:
-                sleep_time = random.randint(60, 100)
+                sleep_time = random.randint(30, 60)
             elif count % 40 == 0:
-                sleep_time = random.randint(30, 50)
+                sleep_time = random.randint(20, 40)
             elif count % 30 == 0:
-                sleep_time = random.randint(20, 25)
+                sleep_time = random.randint(16, 21)
             elif count % 20 == 0:
-                sleep_time = random.randint(15, 22)
+                sleep_time = random.randint(13, 17)
             elif count % 10 == 0:
-                sleep_time = random.randint(11, 17)
-            elif count % 5 == 0:
                 sleep_time = random.randint(9, 14)
+            elif count % 5 == 0:
+                sleep_time = random.randint(8, 11)
             else:
-                sleep_time = random.randint(7, 12)
+                sleep_time = random.randint(5, 9)
             print("Proxy #{}, scraping keyword: {}, {} keywords completed,"
                   " sleep for {} seconds".format(proxy_idx+1, query, count, sleep_time))
             time.sleep(sleep_time+random.random())
