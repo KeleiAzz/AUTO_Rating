@@ -36,6 +36,8 @@ def get_html(url, opener):
         if e.code == 503:
             print("Google is requiring a Captcha. "
                   "For more information see: 'https://support.google.com/websearch/answer/86640'")
+        if e.code == 303:
+            print(e.headers['location'])
         return "Captcha"
     except Exception as e:
         print("Error accessing:", url)
@@ -60,7 +62,7 @@ class QueryResult(object):
     def __init__(self, query, num_results_for_query, page_number=1):
         self.query = query
         self.num_results_for_query = num_results_for_query
-        self.page_number = 1
+        self.page_number = page_number
         self.results = []
 
     def __repr__(self):
@@ -77,7 +79,7 @@ class QueryResult(object):
     def to_rows(self):
         res = []
         for r in self.results:
-            row = r.__dict__.values()
+            row = list(r.__dict__.values())
             row.insert(0, self.query)
             row.insert(0, self.num_results_for_query)
             row.insert(0, self.page_number)
@@ -97,6 +99,7 @@ class GoogleResult:
         # self.cached = None  # Cached version link of page
         # self.page_num = None  # Results page this one was on
         self.rank = None  # What index on this page it was on
+        self.date = None
 
     def __repr__(self):
         title = self.limit_str_size(self.title, 55)
@@ -122,7 +125,7 @@ class GoogleResult:
             return str_element
 
 
-def parse_google(html, query, page=1):
+def parse_google(html, query, page=1, news=False):
     '''
     parse the html from google search page, return an QueryResult object, it has a list of GoogleResult objects.
     :param html:
@@ -146,11 +149,17 @@ def parse_google(html, query, page=1):
         res = GoogleResult()
         # res.page = i
         res.rank = j
-        res.title = _get_title(li)
+        if news:
+            res.title = _get_news_title(li)
+            res.date = _get_date(li)
+            res.snippet = _get_brief(li)
+        else:
+            res.title = _get_title(li)
+            res.snippet = _get_snippet(li)
         res.link = _get_link(li)
         res.domain = _get_domain(res.link)
         # res.google_link = _get_google_link(li)
-        res.snippet = _get_snippet(li)
+
         # res.page_num = page
         # res.cached = _get_cached(li)
         # if void is True:
@@ -171,6 +180,23 @@ def _get_title(li):
     if a is not None:
         return a.text.strip()
     return None
+
+
+def _get_news_title(li):
+    a = li.find_all("a")
+    if len(a) > 1:
+        return a[1].text.strip()
+    else:
+        return None
+
+
+def _get_date(li):
+    try:
+        res = li.find("div",attrs={"class": "slp"}).text.strip()
+        date = res.split('-')[-1]
+        return date
+    except:
+        return None
 
 
 def _get_link(li):
@@ -213,6 +239,14 @@ def _get_google_link(li):
         return None
 
 
+def _get_brief(li):
+    try:
+        brief = li.find("div", attrs={"class": "st"}).text
+        return brief
+    except:
+        return None
+
+
 def _get_snippet(li):
     """Return the description of a google search.
     TODO: There are some text encoding problems to resolve.
@@ -247,101 +281,6 @@ class ExtractWorker(Thread):
             self.queue.task_done()
             time.sleep(1)
         print(self.name, "terminated")
-
-
-class Scraper(object):
-    '''
-    Scraping by using urllib, sending request. This way is easier to be blocked.
-    '''
-    def __init__(self, proxy_list=None, page=1, per_page=10):
-        self.openers = []
-        if proxy_list:
-            for ip, port in proxy_list:
-                self.openers.append(create_opener(ip, int(port)))
-        else:
-            self.openers = [urllib2.build_opener(urllib2.BaseHandler)]
-        self.lock = Lock()
-        self.q_query = Queue()
-        self.q_ans = Queue()
-        self.running = 0
-        self.page = page
-        self.per_page = per_page
-        self.working_thread = 0
-        for i in range(len(self.openers)):
-            self.working_thread += 1
-            t = Thread(target=self.thread_get, args=(i,))
-            t.setDaemon(True)
-            t.start()
-
-    def __del__(self):
-        time.sleep(0.5)
-        self.q_query.join()
-        self.q_ans.join()
-
-    def taskleft(self):
-        return self.q_query.qsize() + self.q_ans.qsize() + self.running
-
-    def push(self, query):
-        # req = (req[0], urllib2.Request(req[1], headers=self.header), req[2])
-        for i in range(1, self.page+1):
-            q = (query, i, self.per_page)
-            self.q_query.put(q)
-
-    # def is_pdf(self):
-
-    def pop(self):
-        return self.q_ans.get()
-
-    def thread_get(self, opener_idx):
-        error = 0
-        count = 0
-        sleep_total = 1
-        while True:
-            print("-----------------------------------")
-            query, page, per_page = self.q_query.get()
-            with self.lock:
-                self.running += 1
-            url = get_search_url(query, page=page, per_page=per_page)
-            html = get_html(url, self.openers[opener_idx])
-            if html and len(html) > 20:
-                self.q_ans.put((query, page, parse_google(html, query)))
-            elif html == "Captcha":
-                error = 3
-                self.q_query.put((query, page, self.per_page))
-            else:
-                error += 1
-                self.q_query.put((query, page, self.per_page))
-            with self.lock:
-                self.running -= 1
-            self.q_query.task_done()
-            if error == 3:
-                with self.lock:
-                    # self.working_thread -= 1
-                    self.openers[opener_idx] = False
-                break
-            count += 1
-            if count % 50 == 0:
-                sleep_time = random.randint(60, 100)
-            elif count % 40 == 0:
-                sleep_time = random.randint(30, 50)
-            elif count % 30 == 0:
-                sleep_time = random.randint(20, 25)
-            elif count % 20 == 0:
-                sleep_time = random.randint(15, 22)
-            elif count % 10 == 0:
-                sleep_time = random.randint(11, 17)
-            elif count % 5 == 0:
-                sleep_time = random.randint(9, 14)
-            else:
-                sleep_time = random.randint(7, 12)
-            print("Proxy #{}, scraping keyword: {}, {} keywords completed,"
-                  " sleep for {} seconds".format(opener_idx+1, query, count, sleep_time))
-            time.sleep(sleep_time+random.random())
-        print("Thread %s terminated due to proxy not working properly." % (opener_idx+1,))
-        with self.lock:
-            self.working_thread -= 1
-        if self.working_thread == 0:
-            print("All threads terminated, please use new proxy and rerun")
 
 
 def read_proxy_list(file):
@@ -401,40 +340,40 @@ def test():
 
 
 if __name__ == "__main__":
-    # test()
-    base_path = "606"
-    keywords_file = 'keywords.txt'
-    company_name_file = 'xxx-xxx'
-    keywords_file_path = os.path.join(base_path, keywords_file)
-    company_name_file_path = os.path.join(base_path, company_name_file)
-
-    proxy = read_proxy_list("ProxyProvider/proxy.txt")
-    s = Scraper(proxy)
-    queries = create_query(keywords_file_path, company_name_file_path)
-    if os.path.exists(company_name_file_path+'.json'):
-        with open(company_name_file_path+'.json', 'r') as f:
-            scraped = set()
-            for line in f:
-                json_obj = json.loads(line.strip())
-                scraped.add(json_obj['query'])
-    else:
-        scraped = None
-    print("{} queries in total".format(len(queries)))
-    if scraped:
-        queries = [q for q in queries if q not in scraped]
-        print("{} queries remaining".format(len(queries)))
-    random.shuffle(queries)
-    for q in queries:
-        s.push(q)
-    result_file = open(company_name_file_path+'.json', 'a')
-    # scraped_query = open("xxx-xxx_scraped", 'w')
-    while s.taskleft():
-        query, page, result = s.pop()
-        result_file.write(json.dumps(result.to_dict()))
-        result_file.write('\n')
-        if s.working_thread == 0:
-            time.sleep(3)
-            result_file.close()
-            exit(1)
-    result_file.close()
-    print("***********END***********")
+    test()
+    # base_path = "606"
+    # keywords_file = 'keywords.txt'
+    # company_name_file = 'xxx-xxx'
+    # keywords_file_path = os.path.join(base_path, keywords_file)
+    # company_name_file_path = os.path.join(base_path, company_name_file)
+    #
+    # proxy = read_proxy_list("ProxyProvider/proxy.txt")
+    # s = Scraper(proxy)
+    # queries = create_query(keywords_file_path, company_name_file_path)
+    # if os.path.exists(company_name_file_path+'.json'):
+    #     with open(company_name_file_path+'.json', 'r') as f:
+    #         scraped = set()
+    #         for line in f:
+    #             json_obj = json.loads(line.strip())
+    #             scraped.add(json_obj['query'])
+    # else:
+    #     scraped = None
+    # print("{} queries in total".format(len(queries)))
+    # if scraped:
+    #     queries = [q for q in queries if q not in scraped]
+    #     print("{} queries remaining".format(len(queries)))
+    # random.shuffle(queries)
+    # for q in queries:
+    #     s.push(q)
+    # result_file = open(company_name_file_path+'.json', 'a')
+    # # scraped_query = open("xxx-xxx_scraped", 'w')
+    # while s.taskleft():
+    #     query, page, result = s.pop()
+    #     result_file.write(json.dumps(result.to_dict()))
+    #     result_file.write('\n')
+    #     if s.working_thread == 0:
+    #         time.sleep(3)
+    #         result_file.close()
+    #         exit(1)
+    # result_file.close()
+    # print("***********END***********")
