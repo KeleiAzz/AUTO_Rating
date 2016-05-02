@@ -72,7 +72,7 @@ class Fetcher:
                     file.write(ans.read())
                     file.close()
                     print('pdf file %s downloaded' % filename)
-                    text = to_text2(pdf_dir + filename)
+                    text = to_text2(os.path.join(pdf_dir, filename))
                     ans = text
                 elif 'application' in ans.getheader('Content-Type'):
                     ans = 'other file'
