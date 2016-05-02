@@ -1,4 +1,5 @@
-from URLExtraction.GoogleSearch import read_proxy_list, create_query, Scraper
+from URLExtraction.GoogleSearch import read_proxy_list, create_query
+from URLExtraction.GoogleScraperRequest import Scraper
 from URLExtraction.URLsResultsProcessing import SearchQuery, SearchResult, write_to_xlsx
 import json
 import os

@@ -35,7 +35,7 @@ if __name__ == "__main__":
     if scraped:
         queries = [q for q in queries if q not in scraped]
         print("{} queries remaining".format(len(queries)))
-        print("About {} queries for each proxy".format(len(queries) / len(proxy)))
+        print("About {} queries for each proxy".format(len(queries) // len(proxy)))
     random.shuffle(queries)
     for q in queries:
         s.push(q)
