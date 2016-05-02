@@ -71,7 +71,7 @@ class ScraperSelenium(object):
             '--proxy-server={}://{}:{}'.format("socks5", ip, port))
         driver = webdriver.Chrome(chrome_options=chrome_ops, executable_path="/usr/local/bin/chromedriver")
         driver.set_window_size(500, 400)
-        # driver.set_window_position()
+        driver.set_window_position(proxy_idx % 3 * 400, (proxy_idx // 3)*400)
         driver.get("http://www.google.com")
         max_wait = 20
         while True:
