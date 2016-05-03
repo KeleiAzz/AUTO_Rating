@@ -159,5 +159,5 @@ def getLocalIP():
     return str(data['ip'])
 
 if __name__ == "__main__":
-    # createKeyPairs("scrc_server", "public.key")
+    createKeyPairs("scrc_server", "public.key")
     createSecurityGroup("proxy", "proxy server")
