@@ -25,7 +25,18 @@ import urllib.request as urllib2
 
 
 class NewsSearch(object):
-    def __init__(self, query, site, proxy=None):
+    def __init__(self, query, site=None, start_date=None, end_date=None, pages=20, news=True, proxy=None):
+        '''
+        Selenium with chromedriver to do google search
+        :param query:
+        :param site: format: nytimes.com
+        :param start_date: format: 12/31/2015
+        :param end_date: format: 12/31/2015
+        :param pages: number of pages to get
+        :param news: whether to search in google news, or in normal search
+        :param proxy: format: [ip, port]
+        :return:
+        '''
         self.next_page_selector = "#pnnext"
         if proxy:
             ip, port = proxy
@@ -35,14 +46,43 @@ class NewsSearch(object):
             self.webdriver = webdriver.Chrome(chrome_options=chrome_ops, executable_path="/usr/local/bin/chromedriver")
         else:
             self.webdriver = webdriver.Chrome(executable_path="/usr/local/bin/chromedriver")
-        self.base_url = "https://www.google.com/search?q={query}+site:{site}&hl=en&gl=us&authuser=0&tbs=sbd:1,cdr:1,cd_min:{start_date},cd_max:{end_date}&start=0"
+
         # self.base_url = "https://www.google.com/search?q={query}+site:{site}&newwindow=1&hl=en&gl=us&authuser=0&tbs=sbd:1,cdr:1,cd_min:{start_date},cd_max:{end_date}&tbm=nws&start=0"
         self.query = query
         self.site = site
-        self.start_date = "1/1/2015"
-        self.end_date = "1/1/2016"
+        self.news = news
+        if start_date and end_date:
+            self.start_date = start_date
+            self.end_date = end_date
+        else:
+            self.start_date = None
+            self.end_date = None
+
+        if start_date and end_date and site:
+            self.base_url = "https://www.google.com/search?q={query}+site:{site}&hl=en&gl=us&authuser=0&" \
+                            "tbs=sbd:1,cdr:1,cd_min:{start_date},cd_max:{end_date}&tbm=nws&start=0"
+            self.url = self.base_url.format(query=self.query, site=self.site,
+                                            start_date=self.start_date, end_date=self.end_date)
+            self.output = "{}_{}_{}_{}_news.xlsx".format(self.query, self.site, self.start_date.replace('/', '-'),
+                                                    self.end_date.replace('/', '-'))
+        elif start_date and end_date and site is None:
+            self.base_url = "https://www.google.com/search?q={query}&hl=en&gl=us&authuser=0&" \
+                            "tbs=sbd:1,cdr:1,cd_min:{start_date},cd_max:{end_date}&tbm=nws&start=0"
+            self.url = self.base_url.format(query=self.query, start_date=self.start_date, end_date=self.end_date)
+            self.output = "{}_{}_{}_news.xlsx".format(query, start_date.replace('/', '-'), end_date.replace('/', '-'))
+        elif (start_date is None or end_date is None) and site:
+            self.base_url = "https://www.google.com/search?q={query}+site:{site}&tbm=nws"
+            self.url = self.base_url.format(query=self.query, site=self.site)
+            self.output = "{}_{}_news.xlsx".format(query, site)
+        else:
+            self.base_url = "https://www.google.com/search?q={query}&tbm=nws"
+            self.url = self.base_url.format(query=self.query)
+            self.output = "{}_news.xlsx".format(query)
+        if not self.news:
+            self.url = self.url.replace('&tbm=nws', '')
+            self.output = self.output.replace('_news', '')
         self.page_number = 1
-        self.pages_per_keyword = 50
+        self.pages_per_keyword = pages
         self.pages = []
 
     # def __del__(self):
@@ -141,7 +181,12 @@ class NewsSearch(object):
         Fills out the search form of the search engine for each keyword.
         Clicks the next link while pages_per_keyword is not reached.
         """
-        url = self.base_url.format(query=self.query, site=self.site, start_date=self.start_date, end_date=self.end_date)
+        url = self.url
+        # if self.site:
+        #     url = self.base_url.format(query=self.query, site=self.site,
+        #                                start_date=self.start_date, end_date=self.end_date)
+        # else:
+        #     url = self.base_url.format(query=self.query, start_date=self.start_date, end_date=self.end_date)
         self.webdriver.get(url)
         for page_number in range(1, self.pages_per_keyword + 1):
             self.page_number = page_number
@@ -150,12 +195,13 @@ class NewsSearch(object):
             html = None
             try:
                 html = self.webdriver.execute_script('return document.body.innerHTML;')
-                print(len(html))
+                # print(len(html))
             except WebDriverException as e:
                 html = self.webdriver.page_source
 
             if html:
-                page = parse_google(html, self.query, page=page_number, news=True)
+                page = parse_google(html, self.query, page=page_number, news=self.news)
+                print(page)
                 self.pages.append(page)
                 # super().after_search()
 
@@ -179,9 +225,9 @@ class NewsSearch(object):
                 rows.append(row)
         for row in rows:
             print(row)
-        filename = "{}_{}_{}_{}.xlsx".format(self.query, self.site, self.start_date.replace('/', '-'),
-                                             self.end_date.replace('/', '-'))
-
+        # filename = "{}_{}_{}_{}.xlsx".format(self.query, self.site, self.start_date.replace('/', '-'),
+        #                                      self.end_date.replace('/', '-'))
+        filename = self.output
         if path:
             file = os.path.join(path, filename)
         else:
@@ -205,29 +251,14 @@ def scrape_news(url, parser, proxy=None):
     return text
 
 
-def parse_forbes(html):
-    soup = BeautifulSoup(html, 'html.parser')
-    res = ""
-    for row in soup.find_all('div', attrs={"class": "article-injected-body ng-scope"}):
-        print(row.text)
-        res += row.text
-    return res
 
-
-def parse_nytimes(html):
-    soup = BeautifulSoup(html, 'html.parser')
-    res = ""
-    for row in soup.find_all('div', attrs={"class": "story-body"}):
-        print(row.text)
-        res += row.text
-    return res
 
 
 if __name__ == "__main__":
     # url = 'http://www.nytimes.com/2015/07/25/fashion/converse-chuck-taylor-all-star-ii.html'
     # text = scrape_news(url, parse_nytimes)
     # print(text)
-    ns = NewsSearch("nike", "forbes.com")
+    ns = NewsSearch("nike", "nytimes.com", pages=5)
     ns.search()
     ns.save_results()
 # for result in ns.results:
