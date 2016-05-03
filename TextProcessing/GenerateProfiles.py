@@ -58,7 +58,7 @@ def generate_profiles_per_company(path, year, out_path=None):
 if __name__ == "__main__":
     for category in ["SM", "SS", "CM", "SRM", "LHR", "ES"]:
         all = generate_profiles_per_company(
-            "/Users/keleigong/Google Drive/SCRC 2015 work/auto-rating/6th/full_text/%s/2015/" % category,
+            "/home/scrc/Documents/WebContent/sentence/{}/".format(category),
             2015,
-            out_path="/Users/keleigong/Google Drive/SCRC 2015 work/auto-rating/6th/full_text/%s/profiles_per_company/" % category,
+            out_path="/home/scrc/Documents/WebContent/sentence/profiles/{}/".format(category),
         )

@@ -218,7 +218,10 @@ def extract_sentences_from_dir(keywords_0, keywords_1=None, keywords_2=None, cat
         for row in contents:
             if category == "ALL":
                 original_sentences = split_content_to_sentences(row.content)
-                sentences = extract_sentences(original_sentences, keywords_0, num_sen)
+                if keywords_0 is None:
+                    sentences = original_sentences
+                else:
+                    sentences = extract_sentences(original_sentences, keywords_0, num_sen)
                 if len(sentences) == 0 and keywords_1 is not None:
                     # print("NO hit in keywords 0")
                     sentences = extract_sentences(original_sentences, keywords_1, num_sen)
@@ -235,7 +238,10 @@ def extract_sentences_from_dir(keywords_0, keywords_1=None, keywords_2=None, cat
                         f.write(res[company][-1].content + '\n')
             elif category in row.categories:
                 original_sentences = split_content_to_sentences(row.content)
-                sentences = extract_sentences(original_sentences, keywords_0, num_sen)
+                if keywords_0 is None:
+                    sentences = original_sentences
+                else:
+                    sentences = extract_sentences(original_sentences, keywords_0, num_sen)
                 if len(sentences) == 0 and keywords_1 is not None:
                     # print("NO hit in keywords 0")
                     sentences = extract_sentences(original_sentences, keywords_1, num_sen)
@@ -252,28 +258,54 @@ def extract_sentences_from_dir(keywords_0, keywords_1=None, keywords_2=None, cat
                         f.write(res[company][-1].content + '\n')
     return res
 
+def two_step(text_files_path, step1_save_path, step2_save_path):
+    extract_sentences_from_dir(step1_0, step1_1, step1_2,
+                               in_path=text_files_path,
+                               out_path=step1_save_path,
+                               num_sen=3)
+
+    keywords = {"SS": SS_step2, "CM": CM_step2, "SRM": SRM_step2, "LHR": LHR_step2, "ES": ES_step2,
+                "SM": SM_step2}
+    for category, keyword in keywords.items():
+        tmp = extract_sentences_from_dir(
+            keyword,
+            category=category,
+            in_path=step1_save_path,
+            out_path=step2_save_path + "{}/".format(category),
+            num_sen=0,
+        )
+
+
+def sentence(text_files_path, output_path):
+    keywords = {"SS": SS_original, "CM": CM_original, "SRM": SRM_original, "LHR": LHR_original, "ES": ES_original,
+                "SM": SM_original}
+    for category, keyword in keywords.items():
+        tmp = extract_sentences_from_dir(
+            keyword,
+            category=category,
+            in_path=text_files_path,
+            out_path=output_path + "{}/".format(category),
+            num_sen=0,
+        )
+
+def full_text(text_files_path, output_path):
+    categories = ["CM", "SS", "SM", "LHR", "ES", "SRM"]
+    for category in categories:
+        extract_sentences_from_dir(None,
+                                   category=category,
+                                   in_path=text_files_path,
+                                   out_path=output_path + "{}/".format(category),)
+
+
 # contents = read_content_from_db()
 # companies = get_company_names()
 if __name__ == "__main__":
-    extract_sentences_from_dir(step1_0, step1_1, step1_2,
-                               in_path="/home/scrc/Desktop/shared folder/WebContents/company_profiles/",
-                               out_path="/home/scrc/Desktop/shared folder/WebContents/step1/",
-                               num_sen=3)
-    # keywords = {"SS": SS_original, "CM": CM_original, "SRM": SRM_original, "LHR": LHR_original, "ES": ES_original}
-    # for category, keyword in keywords.items():
-    #     tmp = extract_sentences_from_DB(
-    #     keyword,
-    #     # keywords_1=step1_1,
-    #     # keywords_2=step1_2,
-    #     path='/Users/keleigong/Google Drive/SCRC 2015 work/auto-rating/6th/no edgar/sentences_original/',
-    #     num_sen=3,
-    #     category=category
-    #     )
-    # tmp = extract_sentences_from_dir(
-    #     SM_original,
-    #     category="SM",
-    #     in_path="/Users/keleigong/Google Drive/SCRC 2015 work/auto-rating/8th/sentences/step1/2015/",
-    #     out_path="/Users/keleigong/Google Drive/SCRC 2015 work/auto-rating/8th/sentences/step2/ES/2015/",
-    #     num_sen=0,
-    # )
-    # all_content = ReadDownloadedContent("/Users/keleigong/Google Drive/SCRC 2015 work/auto-rating/6th/sentences/step1/")
+    # two_step("/home/scrc/Documents/WebContent/company_profiles/",
+    #          "/home/scrc/Documents/WebContent/step1/",
+    #          "/home/scrc/Documents/WebContent/step2/",)
+
+    # sentence("/home/scrc/Documents/WebContent/company_profiles/",
+    #          "/home/scrc/Documents/WebContent/sentence/")
+
+    full_text("/home/scrc/Documents/WebContent/company_profiles/",
+              "/home/scrc/Documents/WebContent/full_text/")
