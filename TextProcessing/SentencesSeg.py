@@ -255,16 +255,20 @@ def extract_sentences_from_dir(keywords_0, keywords_1=None, keywords_2=None, cat
 # contents = read_content_from_db()
 # companies = get_company_names()
 if __name__ == "__main__":
-    keywords = {"SS": SS_original, "CM": CM_original, "SRM": SRM_original, "LHR": LHR_original, "ES": ES_original}
-    for category, keyword in keywords.items():
-        tmp = extract_sentences_from_DB(
-        keyword,
-        # keywords_1=step1_1,
-        # keywords_2=step1_2,
-        path='/Users/keleigong/Google Drive/SCRC 2015 work/auto-rating/6th/no edgar/sentences_original/',
-        num_sen=3,
-        category=category
-        )
+    extract_sentences_from_dir(step1_0, step1_1, step1_2,
+                               in_path="/home/scrc/Desktop/shared folder/WebContents/company_profiles/",
+                               out_path="/home/scrc/Desktop/shared folder/WebContents/step1/",
+                               num_sen=3)
+    # keywords = {"SS": SS_original, "CM": CM_original, "SRM": SRM_original, "LHR": LHR_original, "ES": ES_original}
+    # for category, keyword in keywords.items():
+    #     tmp = extract_sentences_from_DB(
+    #     keyword,
+    #     # keywords_1=step1_1,
+    #     # keywords_2=step1_2,
+    #     path='/Users/keleigong/Google Drive/SCRC 2015 work/auto-rating/6th/no edgar/sentences_original/',
+    #     num_sen=3,
+    #     category=category
+    #     )
     # tmp = extract_sentences_from_dir(
     #     SM_original,
     #     category="SM",
