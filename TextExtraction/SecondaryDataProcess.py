@@ -83,6 +83,11 @@ def generate_rows(doc_file):
     # f = open('processed.txt', 'w')
 
     for idx, p in enumerate(doc.paragraphs):
+        # if p.text.strip().startswith("http") or p.text.startswith("www"):
+        #     print(p.text)
+
+        # if "http" in p.text:
+        # print(p.text)
         if len(p.text.strip()) > 1:
             if 'Heading 1' in p.style.name:
                 # print(p.text)
@@ -173,7 +178,7 @@ def output_to_excel(rows, output_file, company_id=None, year=2015):
     print('done')
 
 
-def get_urls_from_docx(filepath):
+def get_urls_from_docx(filepath, generate_excel=False):
     '''
     Extract all urls from the secondary data docx file.
     :param filepath:
@@ -193,6 +198,15 @@ def get_urls_from_docx(filepath):
                 res[row.company].append(LinkCategory(row.company, row.link, row.section))
     # for key, value in res.items():
     #     res[key] = list(set(value))
+    if generate_excel:
+        wb = Workbook()
+        sheet = wb.create_sheet('output', 0)
+        sheet.append(["company", "link", "categories"])
+        for company, results in res.items():
+            for result in results:
+                sheet.append([result.company, result.link, ",".join(result.categories)])
+        wb.save(filepath[0:filepath.rindex(".")] + "_removed_duplicate.xlsx")
+    # print(len(res))
     return res
 
 def get_urls_from_excel(filepath):
@@ -239,8 +253,9 @@ def docx_to_excel(doc_file, output_file, company_id_file=None, year=2015):
         output_to_excel(rows, output_file, company_id=None, year=year)
 
 if __name__ == "__main__":
-    doc_file = "/Users/keleigong/Dropbox/Python/AUTO_Rating/TextExtraction/secondary data/2013 Secondary Data_ORGANIZED.docx"
-    output_file = 'secondary data/2013_secondary_data.xlsx'
+    doc_file = "2015 secondary data.docx"
+    output_file = '2015 secondary data.xlsx'
     company_id_file = "query_company.csv"
-    docx_to_excel(doc_file, output_file, company_id_file, 2013)
+    # docx_to_excel(doc_file, output_file, company_id_file, 2015)
+    get_urls_from_docx("2015 secondary data.docx", generate_excel=True)
 

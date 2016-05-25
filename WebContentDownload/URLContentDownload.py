@@ -16,10 +16,10 @@ from WebContentDownload.MultipleThreadFetcher import Fetcher
 
 # from pattern.web import URL
 
-BASE_DIR = "/Users/keleigong/Dropbox/Python/AUTO_Rating/URLExtraction/606/filtered/content"
-# SECONDARY_FILE = "/Users/keleigong/Dropbox/Python/AUTO_Rating/TextExtraction/secondary data/2015 secondary data.docx"
+BASE_DIR = "/home/scrc/Desktop/shared folder/secondary/"
+# SECONDARY_FILE = "/home/scrc/program/AUTO_Rating/TextExtraction/2015 secondary data.docx"
 # EXCEL_FILE = "/Users/keleigong/Dropbox/Python/AUTO_Rating/TextExtraction/secondary data/EDGAE_by_year.xlsx"
-URL_FILE = "/Users/keleigong/Dropbox/Python/AUTO_Rating/URLExtraction/606/filtered/1-30.xlsx"
+URL_FILE = "/home/scrc/program/AUTO_Rating/TextExtraction/2015 secondary data.docx"
 
 
 def generate_urls_from_json(json_file, company_name_file):
@@ -61,10 +61,10 @@ if __name__ == "__main__":
     # company_all_urls = generate_urls_from_json('../URLExtraction/concinnity_600/54-106.json',
     #                                             '../URLExtraction/concinnity_600/54-106')
 
-    # company_all_urls = secondary.get_urls_from_docx(SECONDARY_FILE)
+    company_all_urls = secondary.get_urls_from_docx(URL_FILE)
 
     # company_all_urls = secondary.get_urls_from_excel(EXCEL_FILE)
-    company_all_urls = get_processed_urls(URL_FILE)
+    # company_all_urls = get_processed_urls(URL_FILE)
     urls = []
     company_files = {}
     if not os.path.exists(BASE_DIR):
@@ -89,8 +89,9 @@ if __name__ == "__main__":
         processed_urls = []
 
     processed = codecs.open(os.path.join(BASE_DIR, url_file_name + '_processed.txt'), "a", encoding="utf-8")
-
+    print(len(processed_urls), " urls already get downloaded")
     for company, results in company_all_urls.items():
+        # print(company, len(results))
         company_files[company] = codecs.open(os.path.join(text_dir, company.replace('/', ' ') + '.txt'), "a", encoding="utf-8")
         for result in results:
             if result.link not in processed_urls:
@@ -100,6 +101,7 @@ if __name__ == "__main__":
 
     f = Fetcher(threads=10, base_dir=BASE_DIR)
     h = html2text.HTML2Text()
+    print(len(urls), " urls in total")
     for url in urls:
         f.push(url)
     while f.taskleft():
